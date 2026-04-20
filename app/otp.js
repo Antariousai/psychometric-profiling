@@ -27,7 +27,12 @@ export default function OtpScreen() {
     const next = [...otp];
     next[i] = digit;
     setOtp(next);
-    if (digit && i < 5) refs.current[i + 1]?.focus();
+    if (digit && i < 5) {
+      refs.current[i + 1]?.focus();
+    } else if (digit && i === 5 && next.every(d => d.length === 1)) {
+      refs.current[i]?.blur();
+      router.replace('/(tabs)/dashboard');
+    }
   };
 
   return (
@@ -54,7 +59,7 @@ export default function OtpScreen() {
         <Text style={{ fontFamily: T.fBn, fontSize: 13, color: T.ink3, lineHeight: 21, marginBottom: 24 }}>
           +৮৮০১৭১২-৪৪৩২১৯ নম্বরে যে ৬-সংখ্যার কোডটা পাঠানো হয়েছে, সেটা এখানে বসান।
         </Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 8 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 8, width: '100%' }}>
           {otp.map((d, i) => (
             <TextInput
               key={i}
@@ -65,7 +70,7 @@ export default function OtpScreen() {
               keyboardType="number-pad"
               inputMode="numeric"
               style={{
-                flex: 1, height: 56, textAlign: 'center',
+                flex: 1, minWidth: 0, height: 56, textAlign: 'center',
                 fontFamily: T.fMonoBold, fontSize: 22, color: T.ink,
                 borderWidth: 1.5,
                 borderColor: d ? T.teal : T.border,
