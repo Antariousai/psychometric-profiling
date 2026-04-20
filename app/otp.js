@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { T } from '../constants/tokens';
 import BilingualLabel from '../components/BilingualLabel';
@@ -31,12 +31,18 @@ export default function OtpScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.cream }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'android' ? 'height' : 'padding'}
+      style={{ flex: 1, backgroundColor: T.cream }}
+    >
       <BrandHeader
         title={{ bn: 'ওটিপি যাচাই', en: 'OTP Verification' }}
         onBack={() => router.back()}
       />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 24 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingTop: 24, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <BilingualLabel
           bn="নিরাপত্তা কোডটা লিখুন"
           en="Enter security code"
@@ -57,6 +63,7 @@ export default function OtpScreen() {
               onChangeText={(v) => set(i, v)}
               maxLength={1}
               keyboardType="number-pad"
+              inputMode="numeric"
               style={{
                 flex: 1, height: 56, textAlign: 'center',
                 fontFamily: T.fMonoBold, fontSize: 22, color: T.ink,
@@ -96,6 +103,6 @@ export default function OtpScreen() {
           </Text>
         </Pressable>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

@@ -152,7 +152,7 @@ server {
     listen [::]:443 ssl;
     server_name pmp.antarious.com;
 
-    root /home/foysal/antarious/antarious-psychometric-profiling/dist;
+    root /home/foysal/antarious-pmp/dist;
     index index.html;
 
     # SSL certs (certbot will fill these in)
@@ -232,7 +232,7 @@ Paste:
 #!/bin/bash
 set -e
 
-APP_DIR="/home/foysal/antarious/antarious-psychometric-profiling"
+APP_DIR="/home/foysal/antarious-pmp"
 
 echo "==> Pulling latest code..."
 cd "$APP_DIR"
