@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Antarious Profiling",
+    "slug": "antarious-psychometric-profiling",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "antarious",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "backgroundColor": "#0F1829"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F1829"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

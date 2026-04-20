@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Antarious · PKSF Psychometric Profiling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#080E1C;color:#fff;font-family:'Inter','Noto Sans Bengali',sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none;height:100%}
+  #root{min-height:100vh;width:100%}
+
+  @keyframes freyaPulse{
+    0%,100%{box-shadow:0 0 0 8px rgba(46,196,182,0.10),0 0 0 16px rgba(46,196,182,0.04)}
+    50%{box-shadow:0 0 0 14px rgba(46,196,182,0.18),0 0 0 26px rgba(46,196,182,0.08)}
+  }
+  @keyframes freyaHint{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.2);border-radius:2px}
+
+  .shell{display:grid;grid-template-columns:320px 1fr;min-height:100vh;align-items:center;gap:28px;padding:28px}
+  @media(max-width:860px){.shell{grid-template-columns:1fr;padding:0;gap:0}.narrative{display:none!important}}
+  .tweaks-panel{animation:fadeIn 0.25s ease}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="js/questions-data.jsx"></script>
+<script type="text/babel" src="js/core-components.jsx"></script>
+<script type="text/babel" src="js/screens-a.jsx"></script>
+<script type="text/babel" src="js/screens-b.jsx"></script>
+<script type="text/babel" src="js/android-frame.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── Tweak defaults ─────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "device": "phone",
+  "showFrame": true,
+  "palette": "antarious",
+  "defaultPersona": "nasrin",
+  "offline": false,
+  "trainingMode": false
+}/*EDITMODE-END*/;
+
+const PALETTES = {
+  antarious: { navy:'#0F1829', teal:'#2EC4B6', gold:'#B5874F' },
+  warm:      { navy:'#1E1829', teal:'#2EA3B6', gold:'#D4925C' },
+  highcontrast:{ navy:'#000814', teal:'#00E5B0', gold:'#FFC043' },
+};
+
+const DEVICES = {
+  phone:  { w:390,  h:820,  label:'Phone',  sub:'390 × 820',   icon:'📱' },
+  tablet: { w:768,  h:1024, label:'Tablet', sub:'768 × 1024',  icon:'⬜' },
+  laptop: { w:1280, h:800,  label:'Laptop', sub:'1280 × 800',  icon:'💻' },
+};
+
+// ── App shell ───────────────────────────────────────────────
+function App() {
+  const [screen, setScreen] = useState(() => localStorage.getItem('ant.screen') || 'login');
+  const [applicantId, setApplicantId] = useState(() => localStorage.getItem('ant.applicant') || TWEAK_DEFAULTS.defaultPersona);
+  const [answers, setAnswers] = useState(() => { try { return JSON.parse(localStorage.getItem('ant.answers') || '{}'); } catch { return {}; } });
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+  const [tweaksOpen, setTweaksOpen] = useState(false);
+  const [showFreya, setShowFreya] = useState(false);
+  const [pendingSync, setPendingSync] = useState(0);
+  const [vw, setVw] = useState(window.innerWidth);
+
+  useEffect(() => { localStorage.setItem('ant.screen', screen); }, [screen]);
+  useEffect(() => { localStorage.setItem('ant.applicant', applicantId); }, [applicantId]);
+  useEffect(() => { localStorage.setItem('ant.answers', JSON.stringify(answers)); }, [answers]);
+  useEffect(() => {
+    const fn = () => setVw(window.innerWidth);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
+  useEffect(() => {
+    if (tweaks.offline) setPendingSync(Object.keys(answers).length > 0 ? 2 : 0);
+    else setPendingSync(0);
+  }, [tweaks.offline, answers]);
+
+  // Edit-mode protocol
+  useEffect(() => {
+    const handler = e => {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === '__activate_edit_mode') setTweaksOpen(true);
+      if (e.data.type === '__deactivate_edit_mode') setTweaksOpen(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  // Apply palette to T
+  useEffect(() => {
+    const pal = PALETTES[tweaks.palette] || PALETTES.antarious;
+    if (window.T) { window.T.navy = pal.navy; window.T.teal = pal.teal; window.T.gold = pal.gold; }
+  }, [tweaks.palette]);
+
+  const updateTweak = (key, val) => {
+    const next = { ...tweaks, [key]: val };
+    setTweaks(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+  };
+
+  const ctx = {
+    screen, go: setScreen,
+    applicantId, setApplicant: setApplicantId,
+    answers, setAnswers,
+    tweaks, pendingSync,
+    openFreya: () => setShowFreya(true),
+    resetAll: () => { setAnswers({}); setScreen('login'); setApplicantId('nasrin'); },
+  };
+
+  const screenMap = {
+    login: window.LoginScreen, otp: window.OtpScreen,
+    dashboard: window.DashboardScreen, intake: window.IntakeScreen,
+    assessment: window.AssessmentScreen, scoring: window.ScoringScreen,
+    result: window.ResultScreen, history: window.HistoryScreen,
+    analytics: window.AnalyticsScreen,
+  };
+  const Screen = screenMap[screen] || window.LoginScreen;
+
+  const device = DEVICES[tweaks.device] || DEVICES.phone;
+  const standalone = vw <= 860 && tweaks.device === 'phone';
+  const maxH = window.innerHeight - (vw > 860 ? 56 : 0);
+  const maxW = vw > 860 ? vw - 360 : vw;
+  const scale = standalone ? 1 : Math.min(1, Math.min(maxW / device.w, maxH / device.h));
+
+  // Device interior (phone/tablet)
+  const deviceInterior = (
+    <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', background:'#F7F6F2', position:'relative', overflow:'hidden' }}>
+      {tweaks.offline && (
+        <div style={{ background:'linear-gradient(90deg,#E87461,#C83A2A)', color:'#fff', padding:'6px 14px', display:'flex', alignItems:'center', gap:8, fontSize:11, fontWeight:600, fontFamily:"'Inter',sans-serif" }}>
+          <span style={{ width:6, height:6, borderRadius:3, background:'#fff', animation:'blink 1.5s infinite', display:'inline-block' }}/>
+          <span style={{ fontFamily:"'Noto Sans Bengali',sans-serif", fontSize:12, fontWeight:700 }}>অফলাইন</span>
+          <span style={{ opacity:0.85 }}>· {pendingSync} pending sync</span>
+          <span style={{ marginLeft:'auto', fontFamily:"'JetBrains Mono',monospace", fontSize:9, letterSpacing:1, fontWeight:700 }}>WILL SYNC WHEN ONLINE</span>
+        </div>
+      )}
+      {tweaks.trainingMode && (
+        <div style={{ background:'linear-gradient(90deg,#B5874F,#D4925C)', color:'#fff', padding:'6px 14px', display:'flex', alignItems:'center', gap:8 }}>
+          <span style={{ fontFamily:"'Noto Sans Bengali',sans-serif", fontSize:12, fontWeight:700 }}>◉ প্রশিক্ষণ মোড</span>
+          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:10, opacity:0.9 }}>· TRAINING · no real data saved</span>
+        </div>
+      )}
+      <div style={{ flex:1, overflowY:'auto', position:'relative' }}>
+        <Screen ctx={ctx}/>
+      </div>
+      {screen !== 'login' && screen !== 'otp' && screen !== 'scoring' && (
+        <button onClick={() => setShowFreya(true)} style={{
+          position:'absolute', bottom:18, right:16, width:52, height:52, borderRadius:'50%', border:'none',
+          background:'transparent', cursor:'pointer', padding:0, zIndex:20,
+        }}>
+          <div style={{
+            width:52, height:52, borderRadius:'50%',
+            backgroundImage:'url(assets/freya-coin.png)', backgroundSize:'115%', backgroundPosition:'center', backgroundRepeat:'no-repeat',
+            boxShadow:'0 0 0 8px rgba(46,196,182,0.12),0 0 0 16px rgba(46,196,182,0.05),0 4px 14px rgba(46,196,182,0.4)',
+            animation:'freyaPulse 3.5s ease infinite',
+          }}/>
+          <div style={{ position:'absolute', top:-2, right:-2, background:'#E87461', color:'#fff', borderRadius:'50%', width:18, height:18, fontSize:10, fontFamily:"'JetBrains Mono',monospace", fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.25)' }}>?</div>
+        </button>
+      )}
+      {showFreya && screen === 'assessment' && window.__ANT_currentQ && (
+        <window.FreyaHint q={window.__ANT_currentQ} dim={window.__ANT_currentDim} onClose={() => setShowFreya(false)}/>
+      )}
+      {showFreya && screen !== 'assessment' && (
+        <FreyaGenericHint screen={screen} onClose={() => setShowFreya(false)}/>
+      )}
+    </div>
+  );
+
+  // Laptop interior
+  const laptopInterior = (
+    <div style={{ width:'100%', height:'100%', display:'flex', background:'#F7F6F2', overflow:'hidden' }}>
+      <div style={{ width:220, background:'#0F1829', color:'#fff', padding:16, display:'flex', flexDirection:'column', gap:2, flexShrink:0 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:18, paddingBottom:14, borderBottom:'1px solid rgba(255,255,255,0.08)' }}>
+          <img src="assets/antarious-white.png" alt="" style={{ height:22 }}/>
+          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:'#2EC4B6', letterSpacing:1.5, fontWeight:700 }}>× PKSF</div>
+        </div>
+        <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:'rgba(255,255,255,0.35)', letterSpacing:2, fontWeight:700, marginBottom:6, paddingLeft:8 }}>WORKSPACE</div>
+        {[
+          { id:'dashboard', lb:'ড্যাশবোর্ড', en:'Dashboard', icon:'◉' },
+          { id:'intake', lb:'নতুন আবেদন', en:'New Intake', icon:'+' },
+          { id:'assessment', lb:'মূল্যায়ন', en:'Assessment', icon:'◈' },
+          { id:'result', lb:'ফলাফল', en:'Results', icon:'◊' },
+          { id:'history', lb:'ইতিহাস', en:'History', icon:'☰' },
+          { id:'analytics', lb:'বিশ্লেষণ', en:'Analytics', icon:'▲' },
+        ].map(it => (
+          <button key={it.id} onClick={() => setScreen(it.id)} style={{
+            display:'flex', alignItems:'center', gap:10, padding:'9px 10px', borderRadius:8, border:'none',
+            background: screen===it.id ? 'rgba(46,196,182,0.15)' : 'transparent',
+            color: screen===it.id ? '#2EC4B6' : 'rgba(255,255,255,0.75)',
+            cursor:'pointer', textAlign:'left', fontFamily:"'Noto Sans Bengali',sans-serif", fontSize:13, fontWeight:600,
+          }}>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", width:16, opacity:0.8 }}>{it.icon}</span>
+            <div style={{ lineHeight:1.2 }}>
+              <div>{it.lb}</div>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, opacity:0.55, fontWeight:500 }}>{it.en}</div>
+            </div>
+          </button>
+        ))}
+        <div style={{ flex:1 }}/>
+        <div style={{ padding:'12px 10px', background:'rgba(46,196,182,0.06)', borderRadius:10, border:'1px solid rgba(46,196,182,0.15)', display:'flex', gap:8, alignItems:'center' }}>
+          <div style={{ width:30, height:30, borderRadius:'50%', backgroundImage:'url(assets/freya-coin.png)', backgroundSize:'115%', backgroundPosition:'center', flexShrink:0 }}/>
+          <div>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:'#2EC4B6', letterSpacing:1.5, fontWeight:700 }}>FREYA · AI AGENT</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:'rgba(255,255,255,0.6)' }}>সাহায্যের জন্য প্রস্তুত</div>
+          </div>
+        </div>
+      </div>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+        <div style={{ height:56, background:'#fff', borderBottom:'1px solid rgba(0,0,0,0.06)', display:'flex', alignItems:'center', padding:'0 20px', justifyContent:'space-between', flexShrink:0 }}>
+          <div>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8.5, color:'#999', letterSpacing:1.5, fontWeight:700 }}>PKSF · PARTNER ORG · BURO-BANGLADESH</div>
+            <div style={{ fontFamily:"'Noto Sans Bengali',sans-serif", fontSize:16, fontWeight:700, color:'#0F1829' }}>
+              {{ login:'Sign In', otp:'Verify OTP', dashboard:'আপনার পোর্টফোলিও', intake:'নতুন আবেদনকারী', assessment:'সাইকোমেট্রিক মূল্যায়ন', scoring:'স্কোরিং চলছে', result:'প্রোফাইল ফলাফল', history:'আবেদন ইতিহাস', analytics:'শাখা বিশ্লেষণ' }[screen] || screen}
+            </div>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+            {tweaks.offline && <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:'#E87461', letterSpacing:1, fontWeight:700 }}>● OFFLINE · {pendingSync} QUEUED</div>}
+            <div style={{ width:36, height:36, borderRadius:'50%', background:'#0F1829', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12 }}>KH</div>
+          </div>
+        </div>
+        <div style={{ flex:1, overflowY:'auto', display:'flex', justifyContent:'center', position:'relative' }}>
+          <div style={{ width:440, maxWidth:'100%', borderLeft:'1px solid rgba(0,0,0,0.05)', borderRight:'1px solid rgba(0,0,0,0.05)', background:'#F7F6F2', position:'relative', minHeight:'100%' }}>
+            <Screen ctx={ctx}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Device frame wrapper
+  const DeviceFrame = ({ children }) => {
+    if (tweaks.device === 'phone' && tweaks.showFrame && !standalone) {
+      return <window.AndroidDevice width={device.w} height={device.h}>{children}</window.AndroidDevice>;
+    }
+    if (tweaks.device === 'tablet') {
+      return (
+        <div style={{ width:device.w, height:device.h, borderRadius:28, background:'#1a1a1a', padding:14, boxShadow:'0 40px 100px rgba(0,0,0,0.55),inset 0 0 0 2px rgba(255,255,255,0.04)' }}>
+          <div style={{ width:'100%', height:'100%', borderRadius:16, overflow:'hidden', background:'#F7F6F2', position:'relative' }}>{children}</div>
+        </div>
+      );
+    }
+    if (tweaks.device === 'laptop') {
+      return (
+        <div>
+          <div style={{ width:device.w, height:device.h, borderRadius:'14px 14px 0 0', background:'#1a1a1a', padding:10, boxShadow:'0 40px 100px rgba(0,0,0,0.55)' }}>
+            <div style={{ width:'100%', height:'100%', borderRadius:6, overflow:'hidden', background:'#F7F6F2', position:'relative' }}>{children}</div>
+          </div>
+          <div style={{ width:device.w+80, height:14, marginLeft:-40, background:'linear-gradient(180deg,#2a2a2a,#111)', borderRadius:'0 0 16px 16px' }}/>
+        </div>
+      );
+    }
+    if (standalone) return <div style={{ width:'100vw', height:'100vh', background:'#F7F6F2', position:'relative', overflow:'hidden' }}>{children}</div>;
+    return <div style={{ width:device.w, height:device.h, borderRadius:14, overflow:'hidden', boxShadow:'0 30px 80px rgba(0,0,0,0.35)', background:'#F7F6F2', position:'relative' }}>{children}</div>;
+  };
+
+  const shellStyle = {
+    display: vw > 860 ? 'grid' : 'flex',
+    gridTemplateColumns: vw > 860 ? '320px 1fr' : undefined,
+    flexDirection: vw <= 860 ? 'column' : undefined,
+    minHeight: '100vh', alignItems: 'center', gap: vw > 860 ? 28 : 0, padding: vw > 860 ? 28 : 0,
+    background: 'radial-gradient(circle at 20% 10%, rgba(46,196,182,0.07), transparent 50%), radial-gradient(circle at 80% 90%, rgba(181,135,79,0.07), transparent 50%), #080E1C',
+  };
+
+  return (
+    <div style={shellStyle}>
+      {/* Narrative sidebar */}
+      {vw > 860 && tweaks.device !== 'laptop' && !standalone && (
+        <div className="narrative" style={{ color:'#fff', maxWidth:320 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+            <img src="assets/antarious-white.png" alt="Antarious AI" style={{ height:28, width:'auto' }}/>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8.5, color:'#2EC4B6', letterSpacing:2, fontWeight:700, padding:'3px 8px', borderRadius:10, background:'rgba(46,196,182,0.12)', border:'1px solid rgba(46,196,182,0.2)' }}>× PKSF</span>
+          </div>
+          <div style={{ fontFamily:"'Noto Sans Bengali',sans-serif", fontSize:27, fontWeight:800, lineHeight:1.25, marginBottom:12, color:'#fff' }}>
+            ঋণ কর্মকর্তার জন্য সাইকোমেট্রিক প্রোফাইলিং
+          </div>
+          <div style={{ fontFamily:"'Noto Sans Bengali',sans-serif", fontSize:13, color:'rgba(255,255,255,0.6)', lineHeight:1.75, marginBottom:20 }}>
+            ২৫টা সহজ প্রশ্ন · ১২–১৫ মিনিট · পুরোটা বাংলায়
+          </div>
+          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:'rgba(255,255,255,0.3)', letterSpacing:2, fontWeight:700, marginBottom:8 }}>FLOW</div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:5, marginBottom:18 }}>
+            {[['login','Login'],['otp','OTP'],['dashboard','Dashboard'],['intake','Intake'],['assessment','Assessment'],['scoring','Scoring'],['result','Result'],['history','History'],['analytics','Analytics']].map(([id,lb]) => (
+              <button key={id} onClick={() => setScreen(id)} style={{
+                padding:'6px 9px', borderRadius:7, cursor:'pointer', textAlign:'left', letterSpacing:0.5, textTransform:'uppercase',
+                border: `1px solid ${screen===id ? '#2EC4B6' : 'rgba(255,255,255,0.1)'}`,
+                background: screen===id ? 'rgba(46,196,182,0.15)' : 'rgba(255,255,255,0.03)',
+                color: screen===id ? '#2EC4B6' : 'rgba(255,255,255,0.65)',
+                fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, fontWeight:700,
+              }}>{lb}</button>
+            ))}
+          </div>
+          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:'rgba(255,255,255,0.3)', letterSpacing:2, fontWeight:700, marginBottom:8 }}>FEATURES</div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10.5, color:'rgba(255,255,255,0.5)', lineHeight:1.65, marginBottom:18 }}>
+            · 7 behavioural dimensions, 25 Q<br/>
+            · 4 stacked lie-detection mechanics<br/>
+            · Dimension drill-down + audit trail<br/>
+            · Offline field queue + manager approval<br/>
+            · Training mode with explanations<br/>
+            · Freya voice agent (contextual hints)
+          </div>
+          <div style={{ display:'flex', gap:6 }}>
+            <button onClick={() => { localStorage.clear(); ctx.resetAll(); }} style={{ padding:'7px 10px', borderRadius:7, border:'1px solid rgba(255,255,255,0.15)', background:'transparent', color:'rgba(255,255,255,0.7)', cursor:'pointer', fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, fontWeight:700, letterSpacing:1 }}>↺ RESET</button>
+            <button onClick={() => setTweaksOpen(v=>!v)} style={{ padding:'7px 10px', borderRadius:7, border:'1px solid rgba(46,196,182,0.3)', background:'rgba(46,196,182,0.1)', color:'#2EC4B6', cursor:'pointer', fontFamily:"'JetBrains Mono',monospace", fontSize:9.5, fontWeight:700, letterSpacing:1 }}>⚙ TWEAKS</button>
+          </div>
+        </div>
+      )}
+
+      {/* Device */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', width:'100%', minHeight: standalone ? '100vh' : 'auto' }}>
+        <div style={{ transform:`scale(${scale})`, transformOrigin:'center center', transition:'transform 0.3s ease' }}>
+          <DeviceFrame>
+            {tweaks.device === 'laptop' ? laptopInterior : deviceInterior}
+          </DeviceFrame>
+        </div>
+      </div>
+
+      {/* Gear button */}
+      {!standalone && (
+        <button onClick={() => setTweaksOpen(v=>!v)} style={{
+          position:'fixed', top:14, right:14, zIndex:60, width:44, height:44, borderRadius:22,
+          border:'1px solid rgba(46,196,182,0.3)', background:'rgba(15,24,41,0.85)', color:'#2EC4B6',
+          cursor:'pointer', backdropFilter:'blur(10px)', fontFamily:"'JetBrains Mono',monospace", fontSize:16,
+        }}>⚙</button>
+      )}
+
+      {/* Tweaks panel */}
+      {tweaksOpen && (
+        <TweaksPanel tweaks={tweaks} updateTweak={updateTweak}
+          applicantId={applicantId} setApplicantId={setApplicantId}
+          setAnswers={setAnswers} setScreen={setScreen} setTweaksOpen={setTweaksOpen}/>
+      )}
+
+      {/* Version tag */}
+      {!standalone && (
+        <div style={{ position:'fixed', bottom:12, left:12, fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:'rgba(255,255,255,0.22)', letterSpacing:2, fontWeight:700, pointerEvents:'none' }}>
+          ANTARIOUS · PKSF · v1.2 · {device.label.toUpperCase()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Freya generic hint sheet ──────────────────────────────────
+function FreyaGenericHint({ screen, onClose }) {
+  const tips = {
+    dashboard: { bn:'নতুন আবেদনকারী যোগ করতে নীচের + বোতামে চাপুন। লাল চিহ্নিত ব্যক্তিদের পুনরায় পর্যবেক্ষণ করুন।', en:'Tap + to add an applicant. Review red-flagged profiles first.' },
+    intake: { bn:'NID নম্বর ভালো করে মিলিয়ে নিন। ছবি তোলার সময় ভালো আলো দেখুন।', en:'Double-check NID digits. Ensure good lighting when taking photo.' },
+    result: { bn:'স্কোর ভালো হলেও লাল সতর্কতা দেখলে আমাকে জিজ্ঞাসা করুন কেন।', en:'If you see red flags even with good scores, ask me why.' },
+    history: { bn:'আগের আবেদন থেকে নতুন আবেদনকারীদের তুলনা দেখুন।', en:'Compare new applicants to similar past ones.' },
+    analytics: { bn:'আপনার শাখার ঝুঁকির প্রবণতা প্রতি সপ্তাহে একবার দেখুন।', en:'Review branch risk trends weekly.' },
+  };
+  const tip = tips[screen] || { bn:'যেকোনো প্রশ্ন থাকলে আমাকে জিজ্ঞাসা করুন।', en:'Ask me anything.' };
+  return (
+    <div onClick={onClose} style={{
+      position:'absolute', inset:0, background:'rgba(15,24,41,0.35)', backdropFilter:'blur(2px)',
+      display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:30, animation:'fadeIn 0.2s',
+    }}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        width:'92%', background:'#0F1829', color:'#fff', borderRadius:18, padding:18, marginBottom:16,
+        boxShadow:'0 20px 50px rgba(0,0,0,0.4)', border:'1px solid rgba(46,196,182,0.25)', animation:'slideUp 0.25s ease',
+      }}>
+        <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
+          <div style={{ width:40, height:40, borderRadius:'50%', backgroundImage:'url(assets/freya-coin.png)', backgroundSize:'115%', backgroundPosition:'center', flexShrink:0 }}/>
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8.5, color:'#2EC4B6', letterSpacing:1.5, fontWeight:700, marginBottom:4 }}>FREYA · পরামর্শ</div>
+            <div style={{ fontFamily:"'Noto Sans Bengali',sans-serif", fontSize:13.5, lineHeight:1.55, fontWeight:600 }}>{tip.bn}</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10.5, color:'rgba(255,255,255,0.5)', fontStyle:'italic', marginTop:6, lineHeight:1.4 }}>{tip.en}</div>
+          </div>
+          <button onClick={onClose} style={{ border:'none', background:'transparent', color:'rgba(255,255,255,0.6)', fontSize:20, cursor:'pointer' }}>×</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Tweaks panel ──────────────────────────────────────────────
+function TweaksPanel({ tweaks, updateTweak, applicantId, setApplicantId, setAnswers, setScreen, setTweaksOpen }) {
+  const autoComplete = () => {
+    const qs = window.QUESTIONS;
+    const personas = { nasrin:0.78, rafiq:0.48, shima:0.88 };
+    const bias = personas[applicantId] || 0.7;
+    const all = {};
+    qs.forEach(qq => {
+      let val;
+      if (qq.type === 'scale') val = Math.round(qq.scale.min + bias*(qq.scale.max-qq.scale.min));
+      else {
+        const sorted = qq.options.map((o,j)=>({o,j})).sort((a,b)=>b.o.score-a.o.score);
+        const pick = Math.min(sorted.length-1, Math.floor((1-bias)*sorted.length+Math.random()*1.5));
+        val = sorted[pick].j;
+      }
+      const msBase = qq.expectedMs || 4000;
+      const msMult = applicantId==='rafiq' ? 0.2+Math.random()*0.6 : 0.6+Math.random()*0.8;
+      all[qq.id] = { value:val, ms:Math.round(msBase*msMult) };
+    });
+    setAnswers(all);
+    setScreen('result');
+  };
+
+  return (
+    <div className="tweaks-panel" style={{
+      position:'fixed', bottom:20, right:20, width:300, zIndex:70, maxHeight:'calc(100vh - 40px)', overflow:'auto',
+      background:'#0F1829', border:'1px solid rgba(46,196,182,0.25)', borderRadius:16,
+      padding:16, boxShadow:'0 20px 60px rgba(0,0,0,0.5)',
+    }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+        <div>
+          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:'#2EC4B6', letterSpacing:2, fontWeight:700 }}>TWEAKS</div>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:800, color:'#fff', marginTop:2 }}>Prototype controls</div>
+        </div>
+        <button onClick={() => setTweaksOpen(false)} style={{ border:'none', background:'transparent', color:'rgba(255,255,255,0.5)', fontSize:22, cursor:'pointer' }}>×</button>
+      </div>
+
+      <TwkBlock label="Device">
+        {Object.entries(DEVICES).map(([id,d]) => (
+          <TwkOpt key={id} active={tweaks.device===id} onClick={()=>updateTweak('device',id)} color="#2EC4B6" label={`${d.icon} ${d.label}`} sub={d.sub}/>
+        ))}
+      </TwkBlock>
+
+      <TwkBlock label="Applicant persona">
+        {Object.values(window.PERSONAS).map(p => (
+          <TwkOpt key={p.id} active={applicantId===p.id} onClick={()=>setApplicantId(p.id)} color={p.tint} label={p.nameEn.split(' ')[0]} sub={p.occupationEn}/>
+        ))}
+      </TwkBlock>
+
+      <TwkBlock label="Colour palette">
+        {[
+          { id:'antarious', label:'Antarious', color:'#2EC4B6' },
+          { id:'warm', label:'Warm', color:'#2EA3B6' },
+          { id:'highcontrast', label:'High contrast', color:'#00E5B0' },
+        ].map(p => (
+          <TwkOpt key={p.id} active={tweaks.palette===p.id} onClick={()=>updateTweak('palette',p.id)} color={p.color} label={p.label}/>
+        ))}
+      </TwkBlock>
+
+      <TwkBlock label="Mode">
+        <TwkOpt active={tweaks.offline} onClick={()=>updateTweak('offline',!tweaks.offline)} color="#E87461" label={tweaks.offline?'● Offline':'○ Online'} sub="queue mode"/>
+        <TwkOpt active={tweaks.trainingMode} onClick={()=>updateTweak('trainingMode',!tweaks.trainingMode)} color="#B5874F" label={tweaks.trainingMode?'● Training':'○ Live'} sub="tooltips"/>
+      </TwkBlock>
+
+      {tweaks.device === 'phone' && (
+        <TwkBlock label="Phone bezel">
+          <TwkOpt active={tweaks.showFrame} onClick={()=>updateTweak('showFrame',!tweaks.showFrame)} color="#2EC4B6" label={tweaks.showFrame?'With bezel':'Bezel-less'}/>
+        </TwkBlock>
+      )}
+
+      <button onClick={autoComplete} style={{
+        width:'100%', padding:10, borderRadius:10, border:'none', background:'#2EC4B6', color:'#0F1829',
+        fontFamily:"'JetBrains Mono',monospace", fontSize:10, fontWeight:700, cursor:'pointer', letterSpacing:0.5, marginTop:4,
+      }}>⚡ AUTO-COMPLETE → RESULT</button>
+      <div style={{ marginTop:10, fontFamily:"'Inter',sans-serif", fontSize:10, color:'rgba(255,255,255,0.35)', lineHeight:1.5 }}>
+        Changes persist via edit-mode protocol.
+      </div>
+    </div>
+  );
+}
+
+function TwkBlock({ label, children }) {
+  return (
+    <div style={{ marginBottom:12 }}>
+      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8.5, color:'rgba(255,255,255,0.4)', letterSpacing:1.5, fontWeight:700, marginBottom:6 }}>{label.toUpperCase()}</div>
+      <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>{children}</div>
+    </div>
+  );
+}
+function TwkOpt({ active, onClick, color, label, sub }) {
+  return (
+    <button onClick={onClick} style={{
+      padding:'7px 10px', borderRadius:8, cursor:'pointer',
+      border: `1px solid ${active ? color : 'rgba(255,255,255,0.1)'}`,
+      background: active ? `${color}20` : 'rgba(255,255,255,0.03)',
+      color: active ? color : 'rgba(255,255,255,0.7)',
+      fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600,
+      display:'flex', flexDirection:'column', alignItems:'flex-start', gap:1, textAlign:'left',
+    }}>
+      <span>{label}</span>
+      {sub && <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, opacity:0.55 }}>{sub}</span>}
+    </button>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
