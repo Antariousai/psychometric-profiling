@@ -48,34 +48,39 @@ export default function HistoryScreen() {
         title={{ bn: 'আবেদন ইতিহাস', en: 'Assessment History' }}
         onBack={() => router.back()}
       />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 14, gap: 6 }}>
-        {FILTERS.map(f => {
-          const on = filter === f.id;
-          return (
-            <Pressable
-              key={f.id}
-              onPress={() => setFilter(f.id)}
-              style={{
-                paddingVertical: 7, paddingHorizontal: 13, borderRadius: 20,
-                backgroundColor: on ? T.navy : '#fff',
-                borderWidth: on ? 0 : 1, borderColor: T.border,
-                flexDirection: 'row', alignItems: 'center', gap: 4,
-              }}>
-              <Text style={{
-                fontFamily: T.fBnBold, fontSize: 11,
-                color: on ? '#fff' : T.ink2,
-              }}>{f.bn}</Text>
-              <Text style={{
-                fontFamily: T.fMono, fontSize: 9,
-                color: on ? 'rgba(255,255,255,0.6)' : T.ink4,
-              }}>{toBn(f.n)}</Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <View style={{ height: 56 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 8, flexDirection: 'row', alignItems: 'center', height: 56 }}>
+          {FILTERS.map(f => {
+            const on = filter === f.id;
+            return (
+              <Pressable
+                key={f.id}
+                onPress={() => setFilter(f.id)}
+                style={{
+                  height: 34, paddingHorizontal: 14, borderRadius: 17,
+                  backgroundColor: on ? T.navy : '#fff',
+                  borderWidth: 1, borderColor: on ? T.navy : T.border,
+                  flexDirection: 'row', alignItems: 'center', gap: 5,
+                }}>
+                <Text style={{
+                  fontFamily: T.fBnBold, fontSize: 11,
+                  color: on ? '#fff' : T.ink2,
+                  lineHeight: 16,
+                }}>{f.bn}</Text>
+                <Text style={{
+                  fontFamily: T.fMono, fontSize: 9,
+                  color: on ? 'rgba(255,255,255,0.6)' : T.ink4,
+                  lineHeight: 16,
+                }}>{toBn(f.n)}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80 }}>
         {visible.map((r, i) => {
           const p = PERSONAS[r.id];

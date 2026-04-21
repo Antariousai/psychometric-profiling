@@ -76,10 +76,7 @@ export default function ProfileScreen() {
           colors={[T.navy, T.navy2]}
           start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }}
           style={{ paddingTop: 54, paddingHorizontal: 20, paddingBottom: 32 }}>
-          <View style={{
-            position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: 90,
-            backgroundColor: 'rgba(46,196,182,0.10)',
-          }} />
+          
 
           <View style={{ alignItems: 'center', marginBottom: 20 }}>
             {/* Profile photo */}

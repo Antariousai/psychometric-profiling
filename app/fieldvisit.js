@@ -41,9 +41,42 @@ const CHECKLIST = [
   { task: 'PKSF IMIS-এ রিপোর্ট আপলোড', done: false },
 ];
 
+function WebMapIframe({ visits }) {
+  const completedVisits = visits.filter(v => v.status === 'completed');
+  const centerLat = completedVisits.length > 0
+    ? completedVisits.reduce((s, v) => s + v.lat, 0) / completedVisits.length
+    : 23.8103;
+  const centerLng = completedVisits.length > 0
+    ? completedVisits.reduce((s, v) => s + v.lng, 0) / completedVisits.length
+    : 90.4125;
+
+  const bbox = `${centerLng - 4},${centerLat - 3},${centerLng + 4},${centerLat + 3}`;
+  const markerParams = completedVisits
+    .map(v => `&marker=${v.lat}%2C${v.lng}`)
+    .join('');
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${markerParams}`;
+
+  return React.createElement('iframe', {
+    src,
+    style: { width: '100%', height: '100%', border: 'none', display: 'block' },
+    loading: 'lazy',
+    title: 'Field Visit Map',
+  });
+}
+
 function MapComponent({ tracking, visits, selectedVisit }) {
-  if (!MapView || Platform.OS === 'web' || IS_EXPO_GO) {
-    return <FallbackMap tracking={tracking} visits={visits} />;
+  if (Platform.OS === 'web') {
+    return <WebMapIframe visits={visits} />;
+  }
+
+  if (!MapView || IS_EXPO_GO) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#1A3A2E', alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontFamily: T.fMono, fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>
+          MAP — Install react-native-maps
+        </Text>
+      </View>
+    );
   }
 
   const completedVisits = visits.filter(v => v.status === 'completed');
@@ -78,64 +111,6 @@ function MapComponent({ tracking, visits, selectedVisit }) {
         />
       ))}
     </MapView>
-  );
-}
-
-function FallbackMap({ tracking, visits }) {
-  return (
-    <View style={{ flex: 1, backgroundColor: '#1A3A2E', alignItems: 'center', justifyContent: 'center' }}>
-      {Array.from({ length: 6 }).map((_, r) => (
-        <View key={r} style={{
-          position: 'absolute', left: 0, right: 0,
-          top: r * 32, height: 1,
-          backgroundColor: 'rgba(46,196,182,0.1)',
-        }} />
-      ))}
-      {Array.from({ length: 8 }).map((_, c) => (
-        <View key={c} style={{
-          position: 'absolute', top: 0, bottom: 0,
-          left: c * 48, width: 1,
-          backgroundColor: 'rgba(46,196,182,0.1)',
-        }} />
-      ))}
-      {visits.filter(v => v.status === 'completed').map((v, i) => (
-        <View key={i} style={{
-          position: 'absolute',
-          top: 40 + i * 55, left: 60 + i * 80,
-          alignItems: 'center',
-        }}>
-          <View style={{
-            width: 28, height: 28, borderRadius: 14,
-            backgroundColor: v.tint, borderWidth: 2, borderColor: '#fff',
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Text style={{ fontFamily: T.fBnBlack, fontSize: 11, color: '#fff' }}>{v.avatar}</Text>
-          </View>
-          <View style={{ width: 2, height: 8, backgroundColor: v.tint }} />
-          <View style={{ width: 6, height: 3, backgroundColor: v.tint + '88', borderRadius: 3 }} />
-        </View>
-      ))}
-      {tracking && (
-        <View style={{ position: 'absolute', bottom: 30, right: 50, alignItems: 'center' }}>
-          <View style={{
-            width: 14, height: 14, borderRadius: 7,
-            backgroundColor: T.teal, borderWidth: 3, borderColor: '#fff',
-          }} />
-          <View style={{
-            position: 'absolute', width: 30, height: 30, borderRadius: 15,
-            backgroundColor: 'rgba(46,196,182,0.2)', top: -8, left: -8,
-          }} />
-        </View>
-      )}
-      <View style={{
-        position: 'absolute', bottom: 8, left: 0, right: 0,
-        alignItems: 'center',
-      }}>
-        <Text style={{ fontFamily: T.fMono, fontSize: 8, color: 'rgba(255,255,255,0.4)' }}>
-          MAP PREVIEW — Install react-native-maps for live map
-        </Text>
-      </View>
-    </View>
   );
 }
 

@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable, Image } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import * as ImagePicker from 'expo-image-picker';
 import { T } from '../../constants/tokens';
 import { useApp } from '../../context/AppContext';
 import BilingualLabel from '../../components/BilingualLabel';
@@ -70,23 +69,9 @@ const MODULES = [
   },
 ];
 
-async function pickProfilePhoto(setProfilePhoto) {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') return;
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 0.7,
-  });
-  if (!result.canceled && result.assets[0]) {
-    setProfilePhoto(result.assets[0].uri);
-  }
-}
-
 export default function DashboardScreen() {
   const router = useRouter();
-  const { setApplicant, tweaks, setTweaks, pendingSync, profilePhoto, setProfilePhoto } = useApp();
+  const { setApplicant, tweaks, setTweaks, pendingSync } = useApp();
 
   const openApplicant = (a) => {
     setApplicant(a.id);
@@ -108,10 +93,6 @@ export default function DashboardScreen() {
             end={{ x: 0.9, y: 1 }}
             style={{ paddingTop: 54, paddingHorizontal: 20, paddingBottom: 68 }}>
             <View style={{
-              position: 'absolute', top: -60, right: -60, width: 220, height: 220, borderRadius: 110,
-              backgroundColor: 'rgba(46,196,182,0.12)',
-            }} />
-            <View style={{
               flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18,
             }}>
               <View>
@@ -125,24 +106,6 @@ export default function DashboardScreen() {
                   Kamrul Hossain · Loan Officer · ID 21047
                 </Text>
               </View>
-              <Pressable
-                onPress={() => pickProfilePhoto(setProfilePhoto)}
-                style={{
-                  width: 42, height: 42, borderRadius: 21, backgroundColor: T.teal,
-                  alignItems: 'center', justifyContent: 'center',
-                  shadowColor: T.teal, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.45, shadowRadius: 8, elevation: 5,
-                  overflow: 'hidden',
-                }}>
-                {profilePhoto ? (
-                  <Image
-                    source={{ uri: profilePhoto }}
-                    style={{ width: 42, height: 42 }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text style={{ fontSize: 22, color: T.navy }}>👤</Text>
-                )}
-              </Pressable>
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               {STATS.map((s, i) => (
