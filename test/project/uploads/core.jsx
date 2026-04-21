@@ -230,7 +230,7 @@ function LoginScreen({ ctx }) {
           color="#fff" enColor="rgba(255,255,255,0.5)" weight={800}
           style={{marginBottom:6}}/>
         <div style={{fontFamily:T.fBn, fontSize:13, color:'rgba(255,255,255,0.55)', lineHeight:1.7, marginTop:10}}>
-          আপনার মোবাইল নম্বর আর পিন দিয়ে ঢুকে পড়ুন ভাই। একদম সহজ।
+          আপনার মোবাইল নম্বর আর পিন দিয়ে প্রবেশ করুন
         </div>
       </div>
       <div style={{flex:1, padding:'28px 24px', background:T.cream, color:T.ink, borderRadius:'24px 24px 0 0', marginTop:-12, position:'relative', zIndex:2}}>

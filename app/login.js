@@ -48,7 +48,7 @@ export default function LoginScreen() {
             style={{ marginBottom: 6 }}
           />
           <Text style={{ fontFamily: T.fBn, fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 22, marginTop: 10 }}>
-            আপনার মোবাইল নম্বর আর পিন দিয়ে ঢুকে পড়ুন ভাই। একদম সহজ।
+            আপনার মোবাইল নম্বর আর পিন দিয়ে প্রবেশ করুন
           </Text>
         </LinearGradient>
 
