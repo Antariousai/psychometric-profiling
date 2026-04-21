@@ -13,8 +13,8 @@ const TIPS = {
     en: 'Double-check NID digits. Ensure good lighting when taking photo.',
   },
   result: {
-    bn: 'স্কোর ভালো হলেও লাল সতর্কতা দেখলে আমাকে জিজ্ঞাসা করুন কেন।',
-    en: 'If you see red flags even with good scores, ask me why.',
+    bn: 'স্কোর ভালো হলেও অসঙ্গতি দেখলে আমাকে জিজ্ঞাসা করুন কেন।',
+    en: 'If you see discrepancies even with good scores, ask me why.',
   },
   history: {
     bn: 'আগের আবেদন থেকে নতুন আবেদনকারীদের তুলনা দেখুন।',
