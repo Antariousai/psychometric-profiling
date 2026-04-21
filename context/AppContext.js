@@ -13,19 +13,22 @@ export function AppProvider({ children }) {
   const [currentQContext, setCurrentQContext] = useState(null);
   const [hydrated, setHydrated] = useState(false);
   const [profilePhoto, setProfilePhotoState] = useState(null);
+  const [decisions, setDecisionsState] = useState([]);
 
   useEffect(() => {
     (async () => {
-      const [a, ans, tw, photo] = await Promise.all([
+      const [a, ans, tw, photo, decs] = await Promise.all([
         load(K.applicant, 'nasrin'),
         load(K.answers, {}),
         load(K.tweaks, DEFAULT_TWEAKS),
         load(K.profilePhoto, null),
+        load(K.decisions, []),
       ]);
       setApplicantIdState(a);
       setAnswersState(ans || {});
       setTweaksState({ ...DEFAULT_TWEAKS, ...(tw || {}) });
       setProfilePhotoState(photo);
+      setDecisionsState(decs || []);
       setHydrated(true);
     })();
   }, []);
@@ -44,6 +47,14 @@ export function AppProvider({ children }) {
   const setProfilePhoto = (uri) => {
     setProfilePhotoState(uri);
     save(K.profilePhoto, uri);
+  };
+
+  const addDecision = (entry) => {
+    setDecisionsState(prev => {
+      const next = [entry, ...prev];
+      save(K.decisions, next);
+      return next;
+    });
   };
   const openFreya = () => setShowFreya(true);
   const closeFreya = () => setShowFreya(false);
@@ -67,6 +78,7 @@ export function AppProvider({ children }) {
     currentQContext, setCurrentQContext,
     pendingSync, hydrated, resetAll,
     profilePhoto, setProfilePhoto,
+    decisions, addDecision,
   };
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

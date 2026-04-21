@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -31,7 +31,7 @@ function colorForRating(r) {
 
 export default function HistoryScreen() {
   const router = useRouter();
-  const { setApplicant } = useApp();
+  const { setApplicant, decisions } = useApp();
   const [filter, setFilter] = useState('all');
 
   const open = (r) => {
@@ -39,7 +39,21 @@ export default function HistoryScreen() {
     router.push('/result');
   };
 
-  const visible = RECORDS.filter(r => filter === 'all' || r.outcome === filter);
+  const allRecords = useMemo(() => [
+    ...decisions.map(d => ({ id: d.applicantId, ...d })),
+    ...RECORDS,
+  ], [decisions]);
+
+  const filters = useMemo(() => {
+    return [
+      { id: 'all', bn: 'সব', n: allRecords.length },
+      { id: 'approved', bn: 'অনুমোদিত', n: allRecords.filter(r => r.outcome === 'approved').length },
+      { id: 'review', bn: 'পুনর্বিবেচনা', n: allRecords.filter(r => r.outcome === 'review').length },
+      { id: 'declined', bn: 'প্রত্যাখ্যাত', n: allRecords.filter(r => r.outcome === 'declined').length },
+    ];
+  }, [allRecords]);
+
+  const visible = allRecords.filter(r => filter === 'all' || r.outcome === filter);
 
   return (
     <View style={{ flex: 1, backgroundColor: T.cream }}>
@@ -54,7 +68,7 @@ export default function HistoryScreen() {
           showsHorizontalScrollIndicator={false}
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingHorizontal: 16, gap: 8, flexDirection: 'row', alignItems: 'center', height: 56 }}>
-          {FILTERS.map(f => {
+          {filters.map(f => {
             const on = filter === f.id;
             return (
               <Pressable

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,12 +9,7 @@ import BilingualLabel from '../../components/BilingualLabel';
 import ApplicantRow from '../../components/ApplicantRow';
 import FreyaButton from '../../components/FreyaButton';
 import { OfflineBanner, TrainingBanner } from '../../components/Banners';
-
-const STATS = [
-  { bn: 'আজ যতজনকে দেখলাম', en: "Today's assessments", val: '৭', accent: T.teal },
-  { bn: 'এখনো বাকি আছে', en: 'Pending review', val: '৩', accent: T.gold },
-  { bn: 'সন্দেহের ঘর', en: 'Risk flags', val: '২', accent: T.coral },
-];
+import { bn as toBn } from '../../utils/format';
 
 const APPLICANTS = [
   { id: 'nasrin', status: 'completed', score: 742, rating: 'B', flags: 1, whenEn: 'Today · 2:14 PM' },
@@ -71,7 +66,18 @@ const MODULES = [
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { setApplicant, tweaks, setTweaks, pendingSync } = useApp();
+  const { setApplicant, tweaks, setTweaks, pendingSync, decisions } = useApp();
+
+  const stats = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    const todayDecs = decisions.filter(d => new Date(d.timestamp).toDateString() === todayStr);
+    const flaggedTotal = decisions.filter(d => d.outcome === 'review').length;
+    return [
+      { bn: 'আজ যতজনকে দেখলাম', en: "Today's assessments", val: toBn(7 + todayDecs.length), accent: T.teal },
+      { bn: 'এখনো বাকি আছে', en: 'Pending review', val: toBn(Math.max(0, 3 - todayDecs.length)), accent: T.gold },
+      { bn: 'সন্দেহের ঘর', en: 'Risk flags', val: toBn(2 + flaggedTotal), accent: T.coral },
+    ];
+  }, [decisions]);
 
   const openApplicant = (a) => {
     setApplicant(a.id);
@@ -108,7 +114,7 @@ export default function DashboardScreen() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              {STATS.map((s, i) => (
+              {stats.map((s, i) => (
                 <View key={i} style={{
                   flex: 1,
                   backgroundColor: 'rgba(255,255,255,0.06)',

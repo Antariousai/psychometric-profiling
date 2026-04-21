@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -63,8 +63,9 @@ function colorForRating(r) {
 
 export default function ResultScreen() {
   const router = useRouter();
-  const { applicantId, answers } = useApp();
+  const { applicantId, answers, addDecision } = useApp();
   const [tab, setTab] = useState('summary');
+  const [flagModal, setFlagModal] = useState(false);
   const applicant = PERSONAS[applicantId] || PERSONAS.nasrin;
 
   const result = useMemo(() => {
@@ -92,6 +93,21 @@ export default function ResultScreen() {
       : result.rating === 'C' ? Math.round(applicant.loanAsk * 0.6)
       : Math.round(applicant.loanAsk * 0.35);
   const emi = Math.round((recLoanAmt * 1.18) / result.tenure);
+
+  const makeDecision = (outcome) => {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const now = new Date();
+    addDecision({
+      applicantId,
+      outcome,
+      score: result.overall,
+      rating: result.rating,
+      flags: result.flags.length,
+      timestamp: now.getTime(),
+      dateEn: `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`,
+    });
+    router.replace('/(tabs)/dashboard');
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.cream }}>
@@ -218,6 +234,7 @@ export default function ResultScreen() {
         {/* Action buttons */}
         <View style={{ paddingHorizontal: 16, paddingBottom: 24, flexDirection: 'row', gap: 8 }}>
           <Pressable
+            onPress={() => setFlagModal(true)}
             style={{
               flex: 1, paddingVertical: 13, borderRadius: 12,
               borderWidth: 1.5, borderColor: T.amber, backgroundColor: '#fff',
@@ -225,23 +242,82 @@ export default function ResultScreen() {
             }}>
             <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.amber }}>⚑ ফ্ল্যাগ করুন</Text>
           </Pressable>
-          <Pressable style={{
-            flex: 1.3, paddingVertical: 13, borderRadius: 12,
-            backgroundColor: T.teal,
-            alignItems: 'center', justifyContent: 'center',
-            shadowColor: T.teal, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
-          }}>
+          <Pressable
+            onPress={() => makeDecision('approved')}
+            style={{
+              flex: 1.3, paddingVertical: 13, borderRadius: 12,
+              backgroundColor: T.teal,
+              alignItems: 'center', justifyContent: 'center',
+              shadowColor: T.teal, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
+            }}>
             <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>✓ অনুমোদন করুন</Text>
           </Pressable>
-          <Pressable style={{
-            flex: 1.3, paddingVertical: 13, borderRadius: 12,
-            backgroundColor: T.coral,
-            alignItems: 'center', justifyContent: 'center',
-            shadowColor: T.coral, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
-          }}>
+          <Pressable
+            onPress={() => makeDecision('declined')}
+            style={{
+              flex: 1.3, paddingVertical: 13, borderRadius: 12,
+              backgroundColor: T.coral,
+              alignItems: 'center', justifyContent: 'center',
+              shadowColor: T.coral, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
+            }}>
             <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>✗ প্রত্যাখ্যান করুন</Text>
           </Pressable>
         </View>
+
+        {/* Flag confirmation modal */}
+        <Modal visible={flagModal} transparent animationType="fade" onRequestClose={() => setFlagModal(false)}>
+          <View style={{
+            flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+            justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24,
+          }}>
+            <View style={{
+              backgroundColor: '#fff', borderRadius: 20,
+              padding: 24, width: '100%',
+              shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 16,
+            }}>
+              <View style={{
+                width: 48, height: 48, borderRadius: 14,
+                backgroundColor: 'rgba(245,158,11,0.12)',
+                alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+              }}>
+                <Text style={{ fontSize: 22 }}>⚑</Text>
+              </View>
+              <Text style={{ fontFamily: T.fBnBlack, fontSize: 16, color: T.ink, marginBottom: 4 }}>
+                ফ্ল্যাগ ও ম্যানেজারকে পাঠান
+              </Text>
+              <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4, letterSpacing: 1, marginBottom: 14 }}>
+                FLAG & SEND TO MANAGER
+              </Text>
+              <Text style={{ fontFamily: T.fBn, fontSize: 13, color: T.ink2, lineHeight: 21, marginBottom: 6 }}>
+                আপনার অনুমতিতে <Text style={{ fontFamily: T.fBnBold, color: T.ink }}>{applicant.name}</Text>-এর প্রোফাইলটি ম্যানেজারের কাছে পাঠানো হবে এবং পুনর্বিবেচনার জন্য ফ্ল্যাগ করা হবে।
+              </Text>
+              <Text style={{ fontFamily: T.fBody, fontSize: 10.5, color: T.ink3, fontStyle: 'italic', lineHeight: 17, marginBottom: 22 }}>
+                With your permission, {applicant.nameEn}'s profile will be sent to the manager and flagged for review.
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Pressable
+                  onPress={() => setFlagModal(false)}
+                  style={{
+                    flex: 1, paddingVertical: 13, borderRadius: 12,
+                    borderWidth: 1.5, borderColor: T.border, backgroundColor: '#fff',
+                    alignItems: 'center',
+                  }}>
+                  <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.ink2 }}>বাতিল করুন</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => { setFlagModal(false); makeDecision('review'); }}
+                  style={{
+                    flex: 1.4, paddingVertical: 13, borderRadius: 12,
+                    backgroundColor: T.amber,
+                    alignItems: 'center',
+                    shadowColor: T.amber, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
+                  }}>
+                  <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>⚑ পাঠিয়ে দিন</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
       <FreyaButton screen="result" />
     </View>
@@ -249,11 +325,14 @@ export default function ResultScreen() {
 }
 
 function ResultSummary({ result, applicant, recLoanAmt, emi }) {
+  const flagLine = result.flags.length > 0
+    ? ` তবে ${toBn(result.flags.length)}টি অসঙ্গতি ধরা পড়েছে — সাক্ষাৎকারে যাচাই না করে সিদ্ধান্ত নেবেন না।`
+    : ' কোনো অসঙ্গতি নেই — প্রোফাইল পরিষ্কার।';
   const freyaText = {
-    A: `${applicant.name}-এর প্রোফাইল দারুণ। ${fmtTk(recLoanAmt)} টাকা পুরোটাই দেওয়া যায়।`,
-    B: `${applicant.name}-এর সামগ্রিক অবস্থা ভালোই। কিছু যাচাই করে নিলে ভালো হয়।`,
-    C: `${applicant.name}-এর প্রোফাইলে কিছু দুর্বল জায়গা আছে। ছোট অঙ্কে শুরু করুন।`,
-    D: `${applicant.name}-এর ক্ষেত্রে এখনই ঋণ দেওয়া ঠিক হবে না।`,
+    A: `${applicant.name}-এর প্রোফাইল দারুণ। ${fmtTk(recLoanAmt)} টাকা পুরোটাই দেওয়া যায়।${flagLine}`,
+    B: `${applicant.name}-এর সামগ্রিক অবস্থা ভালোই। ${fmtTk(recLoanAmt)} পর্যন্ত বিবেচনা করুন।${flagLine}`,
+    C: `${applicant.name}-এর প্রোফাইলে দুর্বল জায়গা আছে। ${fmtTk(recLoanAmt)} দিয়ে ছোট করে শুরু করুন।${flagLine}`,
+    D: `${applicant.name}-এর ক্ষেত্রে এখনই ঋণ দেওয়া ঠিক হবে না।${flagLine}`,
   };
   const ratingColor = colorForRating(result.rating);
   const metrics = [

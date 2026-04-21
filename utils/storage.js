@@ -6,6 +6,7 @@ export const K = {
   tweaks: 'ant.tweaks',
   screen: 'ant.screen',
   profilePhoto: 'ant.profilePhoto',
+  decisions: 'ant.decisions',
 };
 
 export async function load(key, fallback) {
