@@ -383,6 +383,18 @@ function ResultDims({ result }) {
   );
 }
 
+function ProbeRow({ c, bn, en }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+      <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: c, marginTop: 6 }} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: T.fBnBold, fontSize: 11.5, color: T.ink, lineHeight: 18 }}>{bn}</Text>
+        <Text style={{ fontFamily: T.fBody, fontSize: 9.5, color: T.ink3, fontStyle: 'italic', lineHeight: 14 }}>{en}</Text>
+      </View>
+    </View>
+  );
+}
+
 function ResultFlags({ result }) {
   const [expanded, setExpanded] = useState(null);
 
@@ -450,85 +462,82 @@ function ResultFlags({ result }) {
               overflow: 'hidden',
             }}>
             {/* Header row */}
-            <View style={{ padding: 13, flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ flex: 1 }}>
-                <View style={{
-                  flexDirection: 'row', alignItems: 'center',
-                  justifyContent: 'space-between', marginBottom: 6,
-                }}>
-                  <Chip color={c} size={9}>{tl.en.toUpperCase()}</Chip>
-                  <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4 }}>
-                    Q{f.q?.slice(1) || '?'}
+            <View style={{ padding: 13 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                <View style={{ flex: 1 }}>
+                  <View style={{
+                    flexDirection: 'row', alignItems: 'center',
+                    justifyContent: 'space-between', marginBottom: 6,
+                  }}>
+                    <Chip color={c} size={9}>{tl.en.toUpperCase()}</Chip>
+                    <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4 }}>
+                      Q{f.q?.slice(1) || '?'}
+                    </Text>
+                  </View>
+                  <Text style={{ fontFamily: T.fBnBold, fontSize: 12.5, color: T.ink, lineHeight: 19, marginBottom: 2 }}>
+                    {f.bn}
+                  </Text>
+                  <Text style={{ fontFamily: T.fBody, fontSize: 10.5, color: T.ink3, fontStyle: 'italic' }}>
+                    {f.en}
                   </Text>
                 </View>
-                <Text style={{ fontFamily: T.fBnBold, fontSize: 12.5, color: T.ink, lineHeight: 19, marginBottom: 2 }}>
-                  {f.bn}
-                </Text>
-                <Text style={{ fontFamily: T.fBody, fontSize: 10.5, color: T.ink3, fontStyle: 'italic' }}>
-                  {f.en}
+                <Text style={{ fontFamily: T.fMonoBold, fontSize: 14, color: c, marginLeft: 10, marginTop: 18 }}>
+                  {isOpen ? '▲' : '▼'}
                 </Text>
               </View>
-              <Text style={{ fontFamily: T.fMonoBold, fontSize: 14, color: c, marginLeft: 10 }}>
-                {isOpen ? '▲' : '▼'}
-              </Text>
+              {f.explanation?.bn ? (
+                <View style={{
+                  marginTop: 10,
+                  backgroundColor: `${c}0D`,
+                  borderRadius: 8,
+                  paddingHorizontal: 10, paddingVertical: 8,
+                  borderLeftWidth: 2.5, borderLeftColor: c,
+                }}>
+                  {f.answerGiven && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c }} />
+                      <Text style={{ fontFamily: T.fBnBold, fontSize: 11, color: T.ink, flex: 1 }}>
+                        {f.answerGiven.bn}
+                      </Text>
+                    </View>
+                  )}
+                  <Text style={{ fontFamily: T.fBn, fontSize: 11.5, color: T.ink2, lineHeight: 18 }}>
+                    {f.explanation.bn}
+                  </Text>
+                  <Text style={{ fontFamily: T.fBody, fontSize: 9.5, color: T.ink3, fontStyle: 'italic', marginTop: 3, lineHeight: 15 }}>
+                    {f.explanation.en}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
-            {/* Expanded detail */}
+            {/* Expanded detail — interview probes */}
             {isOpen && (
               <View style={{
-                backgroundColor: `${c}0D`,
                 borderTopWidth: 1, borderTopColor: `${c}33`,
                 padding: 13,
               }}>
-                {f.answerGiven && (
-                  <View style={{ marginBottom: 10 }}>
-                    <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4, letterSpacing: 0.5, marginBottom: 6 }}>
-                      প্রদত্ত উত্তর / ANSWER GIVEN
-                    </Text>
-                    <View style={{
-                      backgroundColor: '#fff', borderRadius: 8,
-                      borderWidth: 1, borderColor: `${c}44`,
-                      paddingHorizontal: 12, paddingVertical: 8,
-                      flexDirection: 'row', alignItems: 'center', gap: 8,
-                    }}>
-                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c }} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontFamily: T.fBnBold, fontSize: 12, color: T.ink }}>{f.answerGiven.bn}</Text>
-                        <Text style={{ fontFamily: T.fBody, fontSize: 10, color: T.ink3, fontStyle: 'italic', marginTop: 2 }}>{f.answerGiven.en}</Text>
-                      </View>
-                    </View>
+                <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4, letterSpacing: 0.5, marginBottom: 8 }}>
+                  সাক্ষাৎকারে জিজ্ঞেস করুন / INTERVIEW PROBE
+                </Text>
+                {f.type === 'too-fast' && (
+                  <View style={{ gap: 6 }}>
+                    <ProbeRow c={c} bn="উত্তর কি নিজে থেকে দিয়েছেন, নাকি কেউ পাশে ছিল?" en="Did you answer this yourself, or was someone nearby?" />
+                    <ProbeRow c={c} bn="এই বিষয়ে আরেকটু বলুন — কীভাবে সিদ্ধান্ত নেন?" en="Tell me more — how do you usually decide this?" />
                   </View>
                 )}
-                {f.expected && (
-                  <View style={{ marginBottom: 10 }}>
-                    <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4, letterSpacing: 0.5, marginBottom: 6 }}>
-                      প্রত্যাশিত উত্তর / EXPECTED
-                    </Text>
-                    <View style={{
-                      backgroundColor: '#fff', borderRadius: 8,
-                      borderWidth: 1, borderColor: 'rgba(22,163,74,0.3)',
-                      paddingHorizontal: 12, paddingVertical: 8,
-                      flexDirection: 'row', alignItems: 'center', gap: 8,
-                    }}>
-                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: T.green }} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontFamily: T.fBnBold, fontSize: 12, color: T.ink }}>{f.expected.bn}</Text>
-                        <Text style={{ fontFamily: T.fBody, fontSize: 10, color: T.ink3, fontStyle: 'italic', marginTop: 2 }}>{f.expected.en}</Text>
-                      </View>
-                    </View>
+                {f.type === 'social-desirability' && (
+                  <View style={{ gap: 6 }}>
+                    <ProbeRow c={c} bn="একটা উদাহরণ দিন যখন আপনি সত্যিই এটা করেছেন।" en="Give a real example of when you actually did this." />
+                    <ProbeRow c={c} bn="কখনো কি মনে হয়েছে এটা করা কঠিন ছিল?" en="Was there a time this felt difficult to follow through?" />
                   </View>
                 )}
-                <View>
-                  <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4, letterSpacing: 0.5, marginBottom: 6 }}>
-                    ব্যাখ্যা / EXPLANATION
-                  </Text>
-                  <Text style={{ fontFamily: T.fBn, fontSize: 12, color: T.ink2, lineHeight: 19 }}>
-                    {f.explanation?.bn}
-                  </Text>
-                  <Text style={{ fontFamily: T.fBody, fontSize: 10, color: T.ink3, fontStyle: 'italic', marginTop: 4, lineHeight: 16 }}>
-                    {f.explanation?.en}
-                  </Text>
-                </View>
+                {f.type === 'inconsistent' && (
+                  <View style={{ gap: 6 }}>
+                    <ProbeRow c={c} bn={`প্রশ্ন ${f.q?.slice(1)} ও ${f.pair?.slice(1)} — এই দুটো উত্তর কীভাবে একসাথে সত্যি?`} en={`How are both Q${f.q?.slice(1)} and Q${f.pair?.slice(1)} answers true at the same time?`} />
+                    <ProbeRow c={c} bn="পরিস্থিতি বদলেছে, নাকি একটু ব্যাখ্যা করবেন?" en="Has something changed, or can you explain further?" />
+                  </View>
+                )}
               </View>
             )}
           </Pressable>
