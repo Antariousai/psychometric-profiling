@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { T } from '../constants/tokens';
@@ -12,6 +12,16 @@ import Chip from '../components/Chip';
 import FreyaButton from '../components/FreyaButton';
 import FreyaHint from '../components/FreyaHint';
 import { bn as toBn } from '../utils/format';
+
+function speakText(text) {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'bn-BD';
+    utterance.rate = 0.85;
+    window.speechSynthesis.speak(utterance);
+  }
+}
 
 function OptionList({ q, answered, onAnswer }) {
   return (
@@ -68,22 +78,14 @@ function ScaleInput({ q, answered, onAnswer }) {
   const current = answered?.value ?? null;
   const max = q.scale.max;
   const min = q.scale.min;
+  const steps = q.scale.steps || [];
+
   return (
     <View style={{
       backgroundColor: '#fff',
       borderWidth: 1.5, borderColor: T.border, borderRadius: 14,
-      paddingVertical: 18, paddingHorizontal: 16,
+      paddingVertical: 18, paddingHorizontal: 12,
     }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
-        <View>
-          <Text style={{ fontFamily: T.fBnBold, fontSize: 11, color: T.ink3 }}>{q.scale.minBn}</Text>
-          <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4, marginTop: 2 }}>{q.scale.minEn}</Text>
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontFamily: T.fBnBold, fontSize: 11, color: T.ink3 }}>{q.scale.maxBn}</Text>
-          <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4, marginTop: 2 }}>{q.scale.maxEn}</Text>
-        </View>
-      </View>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         {Array.from({ length: max - min + 1 }).map((_, i) => {
           const val = min + i;
@@ -91,25 +93,38 @@ function ScaleInput({ q, answered, onAnswer }) {
           const frac = i / (max - min);
           const hue = 170 - frac * 50;
           const bgOn = `hsl(${hue}, 65%, 50%)`;
-          const bgOff = `hsla(${hue}, 65%, 50%, 0.15)`;
+          const bgOff = `hsla(${hue}, 65%, 50%, 0.12)`;
+          const label = steps[i] || toBn(val);
           return (
             <Pressable
               key={val}
               onPress={() => onAnswer(val)}
               style={{
-                flex: 1, aspectRatio: 1, borderRadius: 14,
+                flex: 1,
+                minHeight: 72,
+                borderRadius: 12,
                 backgroundColor: on ? bgOn : bgOff,
+                borderWidth: on ? 0 : 1,
+                borderColor: `hsla(${hue}, 65%, 50%, 0.3)`,
                 alignItems: 'center', justifyContent: 'center',
+                paddingHorizontal: 4, paddingVertical: 10,
                 shadowColor: bgOn, shadowOffset: { width: 0, height: 4 }, shadowOpacity: on ? 0.4 : 0, shadowRadius: 10, elevation: on ? 4 : 0,
                 transform: [{ translateY: on ? -2 : 0 }],
               }}>
               <Text style={{
-                fontFamily: T.fHead, fontSize: 24,
-                color: on ? '#fff' : bgOn,
-              }}>{toBn(val)}</Text>
+                fontFamily: T.fBnBold,
+                fontSize: 10,
+                color: on ? '#fff' : `hsl(${hue}, 60%, 38%)`,
+                textAlign: 'center',
+                lineHeight: 15,
+              }}>{label}</Text>
             </Pressable>
           );
         })}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, paddingHorizontal: 2 }}>
+        <Text style={{ fontFamily: T.fMono, fontSize: 8, color: T.ink4 }}>{q.scale.minEn}</Text>
+        <Text style={{ fontFamily: T.fMono, fontSize: 8, color: T.ink4 }}>{q.scale.maxEn}</Text>
       </View>
     </View>
   );
@@ -177,7 +192,6 @@ export default function AssessmentScreen() {
         }}
         subtitle={`${dim.en.toUpperCase()} · ${dim.icon}`}
         onBack={() => (idx > 0 ? setIdx(idx - 1) : router.back())}
-        right={<Chip color={dim.color}>{dim.icon}</Chip>}
       />
 
       <View style={{ paddingHorizontal: 16, paddingTop: 10, backgroundColor: '#fff' }}>
@@ -243,13 +257,16 @@ export default function AssessmentScreen() {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
-          <View style={{
-            paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
-            borderWidth: 1, borderColor: T.border2, backgroundColor: '#fff',
-            flexDirection: 'row', alignItems: 'center', gap: 6,
-          }}>
+          <Pressable
+            onPress={() => speakText(q.bn)}
+            style={({ pressed }) => ({
+              paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
+              borderWidth: 1, borderColor: T.border2,
+              backgroundColor: pressed ? T.cream2 : '#fff',
+              flexDirection: 'row', alignItems: 'center', gap: 6,
+            })}>
             <Text style={{ fontFamily: T.fBnBold, fontSize: 11, color: T.ink2 }}>🔊 প্রশ্ন শুনুন</Text>
-          </View>
+          </Pressable>
           <Chip color={T.ink4} size={9}>{q.type.toUpperCase()}</Chip>
           {q.socialDesirability ? <Chip color={T.violet} size={9}>CHECK ⚑</Chip> : null}
           {q.consistencyPair ? <Chip color={T.violet} size={9}>PAIR ⟷</Chip> : null}

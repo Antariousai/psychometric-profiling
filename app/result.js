@@ -31,9 +31,30 @@ const PRESET_DIMS = {
 };
 
 const PRESET_FLAG_TEMPLATES = [
-  { q: 'q5', type: 'inconsistent', bn: 'প্রশ্ন ৯ ও ১০-এর উত্তর মিলছে না', en: "Q9 & Q10 answers don't align" },
-  { q: 'q10', type: 'too-fast', bn: 'প্রশ্ন ১৯-এ অস্বাভাবিক দ্রুত উত্তর', en: 'Q19 answered too fast' },
-  { q: 'q19', type: 'social-desirability', bn: 'প্রশ্ন ২১-এ "সর্বোচ্চ" উত্তর দ্রুত', en: 'Q21 max-score answered too fast' },
+  {
+    q: 'q5', type: 'inconsistent',
+    bn: 'প্রশ্ন ৯ ও ১০-এর উত্তর মিলছে না',
+    en: "Q9 & Q10 answers don't align",
+    answerGiven: { bn: 'গ্রহণ করুন', en: 'Accept' },
+    expected: { bn: 'বিস্তারিত জিজ্ঞেস করব', en: 'Ask for details first' },
+    explanation: { bn: 'সঞ্চয়ের অভ্যাস আছে বলেছেন কিন্তু কিস্তি দেরিতে দিয়েছেন — এই দুটো উত্তর একসাথে মেলে না।', en: 'Claims regular saving but has late instalments — the two answers contradict each other.' },
+  },
+  {
+    q: 'q10', type: 'too-fast',
+    bn: 'প্রশ্ন ১৯-এ অস্বাভাবিক দ্রুত উত্তর',
+    en: 'Q19 answered too fast',
+    answerGiven: { bn: 'কোনো বড় ধাক্কা হয়নি', en: 'No major setback' },
+    expected: null,
+    explanation: { bn: 'এই প্রশ্নের উত্তর মাত্র ০.৮ সেকেন্ডে দেওয়া হয়েছে। সাধারণত এই ধরনের প্রশ্নে ৫+ সেকেন্ড লাগে।', en: 'This question was answered in only 0.8 seconds. Typical response time is 5+ seconds.' },
+  },
+  {
+    q: 'q19', type: 'social-desirability',
+    bn: 'প্রশ্ন ২১-এ "সর্বোচ্চ" উত্তর দ্রুত',
+    en: 'Q21 max-score answered too fast',
+    answerGiven: { bn: 'সম্পূর্ণ একমত', en: 'Strongly agree' },
+    expected: null,
+    explanation: { bn: 'সর্বোচ্চ সম্মতির উত্তর মাত্র ১.২ সেকেন্ডে দেওয়া হয়েছে। এটি সামাজিক কাম্যতা পক্ষপাত নির্দেশ করতে পারে।', en: 'Maximum agreement selected in just 1.2 seconds. This may indicate social desirability bias.' },
+  },
 ];
 
 function colorForRating(r) {
@@ -155,6 +176,7 @@ export default function ResultScreen() {
           </View>
         </LinearGradient>
 
+        {/* Tabs */}
         <View style={{
           flexDirection: 'row', gap: 4,
           paddingHorizontal: 12, paddingTop: 10,
@@ -163,7 +185,7 @@ export default function ResultScreen() {
           {[
             { id: 'summary', bn: 'সারাংশ', en: 'Summary' },
             { id: 'dims', bn: 'মাত্রা', en: 'Dimensions' },
-            { id: 'flags', bn: 'পতাকা', en: 'Flags', n: result.flags.length },
+            { id: 'flags', bn: 'অসঙ্গতি', en: 'Discrepancy', n: result.flags.length },
             { id: 'loan', bn: 'ঋণ', en: 'Loan' },
           ].map(tt => {
             const on = tab === tt.id;
@@ -193,23 +215,31 @@ export default function ResultScreen() {
           {tab === 'loan' ? <ResultLoan result={result} applicant={applicant} recLoanAmt={recLoanAmt} emi={emi} /> : null}
         </View>
 
-        <View style={{ paddingHorizontal: 16, paddingBottom: 24, flexDirection: 'row', gap: 10 }}>
+        {/* Action buttons */}
+        <View style={{ paddingHorizontal: 16, paddingBottom: 24, flexDirection: 'row', gap: 8 }}>
           <Pressable
-            onPress={() => router.replace('/(tabs)/dashboard')}
             style={{
               flex: 1, paddingVertical: 13, borderRadius: 12,
-              borderWidth: 1.5, borderColor: T.border2, backgroundColor: '#fff',
+              borderWidth: 1.5, borderColor: T.amber, backgroundColor: '#fff',
               alignItems: 'center', justifyContent: 'center',
             }}>
-            <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.ink2 }}>পরে দেখব</Text>
+            <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.amber }}>⚑ ফ্ল্যাগ করুন</Text>
           </Pressable>
           <Pressable style={{
-            flex: 2, paddingVertical: 13, borderRadius: 12,
+            flex: 1.3, paddingVertical: 13, borderRadius: 12,
             backgroundColor: T.teal,
             alignItems: 'center', justifyContent: 'center',
             shadowColor: T.teal, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
           }}>
-            <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>✓ অনুমোদন করে পাঠান</Text>
+            <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>✓ অনুমোদন করুন</Text>
+          </Pressable>
+          <Pressable style={{
+            flex: 1.3, paddingVertical: 13, borderRadius: 12,
+            backgroundColor: T.coral,
+            alignItems: 'center', justifyContent: 'center',
+            shadowColor: T.coral, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
+          }}>
+            <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>✗ প্রত্যাখ্যান করুন</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -230,7 +260,7 @@ function ResultSummary({ result, applicant, recLoanAmt, emi }) {
     { label: { bn: 'সুপারিশকৃত ঋণ', en: 'Recommended' }, val: fmtTk(recLoanAmt), sub: `${toBn(result.tenure)} মাসে`, color: T.teal },
     { label: { bn: 'মাসিক কিস্তি', en: 'Monthly EMI' }, val: fmtTk(emi), sub: `${toBn(result.tenure)} মাস`, color: T.gold },
     { label: { bn: 'ঝুঁকি স্তর', en: 'Risk tier' }, val: result.risk, sub: `Rating ${result.rating}`, color: ratingColor },
-    { label: { bn: 'পতাকা', en: 'Flags raised' }, val: toBn(result.flags.length), sub: result.flags.length === 0 ? 'পরিষ্কার' : 'পর্যালোচনা', color: result.flags.length === 0 ? T.green : T.coral },
+    { label: { bn: 'অসঙ্গতি', en: 'Discrepancies' }, val: toBn(result.flags.length), sub: result.flags.length === 0 ? 'পরিষ্কার' : 'পর্যালোচনা', color: result.flags.length === 0 ? T.green : T.coral },
   ];
   const probes = [
     { bn: 'গত ৬ মাসে কোনো কিস্তি কেন দেরি হয়েছিল?', en: 'Probe payment discipline history' },
@@ -354,6 +384,8 @@ function ResultDims({ result }) {
 }
 
 function ResultFlags({ result }) {
+  const [expanded, setExpanded] = useState(null);
+
   if (result.flags.length === 0) {
     return (
       <View style={{
@@ -362,61 +394,144 @@ function ResultFlags({ result }) {
         borderRadius: 14, padding: 24, alignItems: 'center',
       }}>
         <Text style={{ fontSize: 42, marginBottom: 10 }}>✓</Text>
-        <BilingualLabel bn="কোনো পতাকা নেই" en="No flags raised" sizeBn={15} sizeEn={11} weight="800" align="center" color={T.green} />
+        <BilingualLabel bn="কোনো অসঙ্গতি নেই" en="No discrepancies found" sizeBn={15} sizeEn={11} weight="800" align="center" color={T.green} />
         <Text style={{ fontFamily: T.fBn, fontSize: 12, color: T.ink3, marginTop: 8, lineHeight: 19, textAlign: 'center' }}>
           উত্তরে কোনো অসামঞ্জস্য বা সময়গত সন্দেহ পাওয়া যায়নি।
         </Text>
       </View>
     );
   }
+
   const typeColor = { inconsistent: T.violet, 'too-fast': T.amber, 'social-desirability': T.coral };
   const typeLabel = {
-    inconsistent: { en: 'Inconsistent pair' },
-    'too-fast': { en: 'Answered too fast' },
-    'social-desirability': { en: 'Social desirability bias' },
+    inconsistent: { bn: 'অসামঞ্জস্যপূর্ণ', en: 'Inconsistent pair' },
+    'too-fast': { bn: 'অতি দ্রুত উত্তর', en: 'Answered too fast' },
+    'social-desirability': { bn: 'সামাজিক পক্ষপাত', en: 'Social desirability bias' },
   };
+
   return (
     <View>
-      <View style={{
-        backgroundColor: 'rgba(224,79,79,0.08)',
-        borderWidth: 1, borderColor: 'rgba(224,79,79,0.25)',
-        borderLeftWidth: 3, borderLeftColor: T.coral,
-        borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, marginBottom: 12,
-      }}>
-        <Text style={{ fontFamily: T.fBnBold, fontSize: 12.5, color: T.ink, marginBottom: 4 }}>
-          ⚑ {toBn(result.flags.length)}টি সতর্কতা পতাকা উঠেছে
+      {/* Summary banner — tap to expand first item */}
+      <Pressable
+        onPress={() => setExpanded(expanded === 'summary' ? null : 'summary')}
+        style={{
+          backgroundColor: 'rgba(224,79,79,0.08)',
+          borderWidth: 1, borderColor: 'rgba(224,79,79,0.25)',
+          borderLeftWidth: 3, borderLeftColor: T.coral,
+          borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, marginBottom: 12,
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: T.fBnBold, fontSize: 12.5, color: T.ink, marginBottom: 4 }}>
+            ⚑ {toBn(result.flags.length)}টি অসঙ্গতি ধরা পড়েছে
+          </Text>
+          <Text style={{ fontFamily: T.fBn, fontSize: 11, color: T.ink2, lineHeight: 17 }}>
+            এগুলো প্রত্যাখ্যানের কারণ নয় — সাক্ষাৎকারে অতিরিক্ত যাচাই প্রয়োজন।
+          </Text>
+        </View>
+        <Text style={{ fontFamily: T.fMonoBold, fontSize: 16, color: T.coral, marginLeft: 8 }}>
+          {expanded === 'summary' ? '▲' : '▼'}
         </Text>
-        <Text style={{ fontFamily: T.fBn, fontSize: 11, color: T.ink2, lineHeight: 17 }}>
-          এগুলো প্রত্যাখ্যানের কারণ নয় — সাক্ষাৎকারে অতিরিক্ত যাচাই প্রয়োজন।
-        </Text>
-      </View>
+      </Pressable>
+
       {result.flags.map((f, i) => {
         const c = typeColor[f.type] || T.amber;
-        const tl = typeLabel[f.type] || { en: f.type };
+        const tl = typeLabel[f.type] || { bn: f.type, en: f.type };
+        const isOpen = expanded === i;
         return (
-          <View
+          <Pressable
             key={i}
+            onPress={() => setExpanded(isOpen ? null : i)}
             style={{
               backgroundColor: '#fff',
-              borderWidth: 1, borderColor: T.border, borderRadius: 12,
-              padding: 13, marginBottom: 10,
+              borderWidth: 1, borderColor: isOpen ? c : T.border,
+              borderRadius: 12,
+              marginBottom: 10,
+              overflow: 'hidden',
             }}>
-            <View style={{
-              flexDirection: 'row', alignItems: 'center',
-              justifyContent: 'space-between', marginBottom: 8,
-            }}>
-              <Chip color={c} size={9}>{tl.en.toUpperCase()}</Chip>
-              <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4 }}>
-                Q{f.q?.slice(1) || '?'}
+            {/* Header row */}
+            <View style={{ padding: 13, flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1 }}>
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center',
+                  justifyContent: 'space-between', marginBottom: 6,
+                }}>
+                  <Chip color={c} size={9}>{tl.en.toUpperCase()}</Chip>
+                  <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4 }}>
+                    Q{f.q?.slice(1) || '?'}
+                  </Text>
+                </View>
+                <Text style={{ fontFamily: T.fBnBold, fontSize: 12.5, color: T.ink, lineHeight: 19, marginBottom: 2 }}>
+                  {f.bn}
+                </Text>
+                <Text style={{ fontFamily: T.fBody, fontSize: 10.5, color: T.ink3, fontStyle: 'italic' }}>
+                  {f.en}
+                </Text>
+              </View>
+              <Text style={{ fontFamily: T.fMonoBold, fontSize: 14, color: c, marginLeft: 10 }}>
+                {isOpen ? '▲' : '▼'}
               </Text>
             </View>
-            <Text style={{ fontFamily: T.fBnBold, fontSize: 12.5, color: T.ink, lineHeight: 19, marginBottom: 3 }}>
-              {f.bn}
-            </Text>
-            <Text style={{ fontFamily: T.fBody, fontSize: 10.5, color: T.ink3, fontStyle: 'italic' }}>
-              {f.en}
-            </Text>
-          </View>
+
+            {/* Expanded detail */}
+            {isOpen && (
+              <View style={{
+                backgroundColor: `${c}0D`,
+                borderTopWidth: 1, borderTopColor: `${c}33`,
+                padding: 13,
+              }}>
+                {f.answerGiven && (
+                  <View style={{ marginBottom: 10 }}>
+                    <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4, letterSpacing: 0.5, marginBottom: 6 }}>
+                      প্রদত্ত উত্তর / ANSWER GIVEN
+                    </Text>
+                    <View style={{
+                      backgroundColor: '#fff', borderRadius: 8,
+                      borderWidth: 1, borderColor: `${c}44`,
+                      paddingHorizontal: 12, paddingVertical: 8,
+                      flexDirection: 'row', alignItems: 'center', gap: 8,
+                    }}>
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: T.fBnBold, fontSize: 12, color: T.ink }}>{f.answerGiven.bn}</Text>
+                        <Text style={{ fontFamily: T.fBody, fontSize: 10, color: T.ink3, fontStyle: 'italic', marginTop: 2 }}>{f.answerGiven.en}</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+                {f.expected && (
+                  <View style={{ marginBottom: 10 }}>
+                    <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4, letterSpacing: 0.5, marginBottom: 6 }}>
+                      প্রত্যাশিত উত্তর / EXPECTED
+                    </Text>
+                    <View style={{
+                      backgroundColor: '#fff', borderRadius: 8,
+                      borderWidth: 1, borderColor: 'rgba(22,163,74,0.3)',
+                      paddingHorizontal: 12, paddingVertical: 8,
+                      flexDirection: 'row', alignItems: 'center', gap: 8,
+                    }}>
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: T.green }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: T.fBnBold, fontSize: 12, color: T.ink }}>{f.expected.bn}</Text>
+                        <Text style={{ fontFamily: T.fBody, fontSize: 10, color: T.ink3, fontStyle: 'italic', marginTop: 2 }}>{f.expected.en}</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+                <View>
+                  <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4, letterSpacing: 0.5, marginBottom: 6 }}>
+                    ব্যাখ্যা / EXPLANATION
+                  </Text>
+                  <Text style={{ fontFamily: T.fBn, fontSize: 12, color: T.ink2, lineHeight: 19 }}>
+                    {f.explanation?.bn}
+                  </Text>
+                  <Text style={{ fontFamily: T.fBody, fontSize: 10, color: T.ink3, fontStyle: 'italic', marginTop: 4, lineHeight: 16 }}>
+                    {f.explanation?.en}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </Pressable>
         );
       })}
     </View>
@@ -434,7 +549,7 @@ function ResultLoan({ result, applicant, recLoanAmt, emi }) {
     result.overall >= 650
       ? `• মোট স্কোর ${toBn(result.overall)} — ভালো জায়গায় আছে`
       : `• মোট স্কোর ${toBn(result.overall)} — সাবধানে শুরু করি`,
-    `• ${toBn(result.flags.length)}টা জায়গায় সন্দেহ ছিল, সেগুলোও ধরেছি`,
+    `• ${toBn(result.flags.length)}টা অসঙ্গতি ছিল, সেগুলোও ধরেছি`,
     `• সঞ্চয় ${fmtTk(applicant.savings)} — মাসের কিস্তি টেনে নিতে অসুবিধা হবে না`,
   ];
   return (

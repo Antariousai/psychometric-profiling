@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -31,16 +31,11 @@ export default function LoginScreen() {
           }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 22 }}>
             <AntariousLogo variant="white" height={28} />
-            <View style={{
-              paddingVertical: 3, paddingHorizontal: 8,
-              borderRadius: 10,
-              backgroundColor: 'rgba(46,196,182,0.12)',
-              borderWidth: 1, borderColor: 'rgba(46,196,182,0.2)',
-            }}>
-              <Text style={{ fontFamily: T.fMonoBold, fontSize: 8, color: T.teal, letterSpacing: 2 }}>
-                × PKSF
-              </Text>
-            </View>
+            <Image
+              source={require('../assets/images/pksf-logo.png')}
+              style={{ height: 28, width: 80 }}
+              resizeMode="contain"
+            />
           </View>
           <BilingualLabel
             bn="সাইকোমেট্রিক প্রোফাইলিং"

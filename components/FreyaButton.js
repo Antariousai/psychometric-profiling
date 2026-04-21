@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Pressable, Text } from 'react-native';
+import { View, Pressable, Text, Platform } from 'react-native';
 import FreyaOrb from './FreyaOrb';
 import FreyaChat from './FreyaChat';
 
@@ -10,7 +10,13 @@ export default function FreyaButton({ screen = 'dashboard', bottom = 18, right =
     <>
       <Pressable
         onPress={handlePress}
-        style={{ position: 'absolute', bottom, right, width: 52, height: 52, zIndex: 20 }}>
+        style={{
+          position: Platform.OS === 'web' ? 'fixed' : 'absolute',
+          bottom: Platform.OS === 'web' ? 24 : bottom,
+          right: Platform.OS === 'web' ? 24 : right,
+          width: 52, height: 52,
+          zIndex: Platform.OS === 'web' ? 9999 : 20,
+        }}>
         <FreyaOrb size={52} pulse />
         <View style={{
           position: 'absolute', top: -2, right: -2,

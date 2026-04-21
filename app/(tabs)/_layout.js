@@ -10,6 +10,8 @@ const ROUTE_TO_ACTIVE = {
   '/history': 'history',
   '/(tabs)/analytics': 'analytics',
   '/analytics': 'analytics',
+  '/(tabs)/profile': 'profile',
+  '/profile': 'profile',
 };
 
 export default function TabsLayout() {

@@ -7,7 +7,6 @@ import { T } from '../../constants/tokens';
 import { DIMENSIONS } from '../../data/dimensions';
 import BrandHeader from '../../components/BrandHeader';
 import BilingualLabel from '../../components/BilingualLabel';
-import Chip from '../../components/Chip';
 import FreyaOrb from '../../components/FreyaOrb';
 import FreyaButton from '../../components/FreyaButton';
 import { bn as toBn } from '../../utils/format';
@@ -16,11 +15,12 @@ const KPIS = [
   { bn: 'মোট মূল্যায়ন', en: 'Assessments', val: '১৪৭', delta: '+২২%', color: T.teal },
   { bn: 'গড় স্কোর', en: 'Avg score', val: '৬৮৪', delta: '+১৮', color: T.gold },
   { bn: 'অনুমোদন হার', en: 'Approval rate', val: '৭১%', delta: '+৪%', color: T.green },
-  { bn: 'মিথ্যা পতাকা', en: 'Lie-flags', val: '১৯', delta: '১৩%', color: T.coral },
+  { bn: 'মিথ্যা সনাক্তকরণ', en: 'Lie-detection flags', val: '১৯', delta: '১৩%', color: T.coral },
 ];
 
 const WEEKLY = [45, 58, 62, 71, 68, 82, 91];
 const DIM_PCT = [72, 58, 64, 70, 51, 67, 78];
+const CHART_HEIGHT = 100;
 
 export default function AnalyticsScreen() {
   const router = useRouter();
@@ -32,9 +32,8 @@ export default function AnalyticsScreen() {
         title={{ bn: 'বিশ্লেষণ ড্যাশবোর্ড', en: 'Branch Manager Analytics' }}
         onBack={() => router.back()}
         subtitle="PO-LEVEL · LAST 30 DAYS"
-        right={<Chip color={T.gold}>BM</Chip>}
       />
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
           {KPIS.map((k, i) => (
             <View key={i} style={{
@@ -53,6 +52,7 @@ export default function AnalyticsScreen() {
           ))}
         </View>
 
+        {/* Weekly trend - fixed chart */}
         <View style={{
           backgroundColor: '#fff',
           borderWidth: 1, borderColor: T.border, borderRadius: 14,
@@ -61,11 +61,11 @@ export default function AnalyticsScreen() {
           <BilingualLabel bn="সাপ্তাহিক প্রবণতা" en="Weekly trend · assessments" sizeBn={13} sizeEn={10} weight="700" style={{ marginBottom: 18 }} />
           <View style={{
             flexDirection: 'row', alignItems: 'flex-end',
-            gap: 6, height: 100, paddingHorizontal: 2,
+            gap: 6, height: CHART_HEIGHT, paddingHorizontal: 2,
           }}>
             {WEEKLY.map((v, i) => (
-              <View key={i} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
-                <View style={{ width: '100%', height: `${v}%`, position: 'relative' }}>
+              <View key={i} style={{ flex: 1, height: CHART_HEIGHT, alignItems: 'center', justifyContent: 'flex-end' }}>
+                <View style={{ width: '100%', height: v, position: 'relative' }}>
                   <LinearGradient
                     colors={[T.teal, T.teal2]}
                     style={{
@@ -74,11 +74,11 @@ export default function AnalyticsScreen() {
                     }}
                   />
                   <Text style={{
-                    position: 'absolute', top: -14, alignSelf: 'center',
+                    position: 'absolute', top: -16, alignSelf: 'center',
                     fontFamily: T.fMonoBold, fontSize: 8.5, color: T.ink3,
                   }}>{toBn(v)}</Text>
                 </View>
-                <Text style={{ fontFamily: T.fMono, fontSize: 8, color: T.ink4 }}>{`W${i + 1}`}</Text>
+                <Text style={{ fontFamily: T.fMono, fontSize: 8, color: T.ink4, marginTop: 4 }}>{`W${i + 1}`}</Text>
               </View>
             ))}
           </View>
@@ -117,12 +117,12 @@ export default function AnalyticsScreen() {
           </View>
           <Text style={{ fontFamily: T.fBn, fontSize: 11.5, color: 'rgba(255,255,255,0.78)', lineHeight: 19 }}>
             • ব্যবসায়িক জ্ঞান মাত্রায় গড় ৫১% — ৩ জন কর্মকর্তার প্রশিক্ষণ প্রয়োজন{'\n'}
-            • ১৯টি মিথ্যা-পতাকার মধ্যে ৭টি রফিক গ্রুপ থেকে — পুনরায় সাক্ষাৎকার নিন{'\n'}
+            • ১৯টি মিথ্যা সনাক্তকরণের মধ্যে ৭টি রফিক গ্রুপ থেকে — পুনরায় সাক্ষাৎকার নিন{'\n'}
             • মোট ১৪৭টি মূল্যায়নের মধ্যে ২২% মহিলা — টার্গেট ৪০%
           </Text>
         </View>
       </ScrollView>
-      <FreyaButton screen="analytics" />
+      <FreyaButton screen="analytics" bottom={90} />
     </View>
   );
 }

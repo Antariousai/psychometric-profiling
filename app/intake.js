@@ -8,7 +8,6 @@ import { PERSONAS } from '../data/personas';
 import { useApp } from '../context/AppContext';
 import BilingualLabel from '../components/BilingualLabel';
 import BrandHeader from '../components/BrandHeader';
-import Chip from '../components/Chip';
 import Field from '../components/Field';
 import PrimaryBtn from '../components/PrimaryBtn';
 import FreyaOrb from '../components/FreyaOrb';
@@ -30,7 +29,6 @@ export default function IntakeScreen() {
         title={{ bn: 'নতুন আবেদনকারী', en: 'New Applicant Intake' }}
         onBack={() => router.back()}
         subtitle="STEP 1 OF 3 · BASIC INFO"
-        right={<Chip color={T.teal}>১/৩</Chip>}
       />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <View style={{ paddingHorizontal: 16, paddingTop: 14 }}>
@@ -162,7 +160,7 @@ export default function IntakeScreen() {
                 Freya বলছে:
               </Text>
               <Text style={{ fontFamily: T.fBn, fontSize: 12, color: T.ink2, lineHeight: 20 }}>
-                তথ্যগুলো ভালোই লাগছে। এখন ২৫টা প্রশ্ন ধরে ধরে করব — ১২ থেকে ১৫ মিনিট লাগবে, তাড়া নেই।
+                তথ্য সঠিক মনে হলে প্রশ্নোত্তর পর্ব শুরু করুন।
               </Text>
             </View>
           </View>

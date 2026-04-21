@@ -47,7 +47,6 @@ export default function HistoryScreen() {
       <BrandHeader
         title={{ bn: 'আবেদন ইতিহাস', en: 'Assessment History' }}
         onBack={() => router.back()}
-        right={<Chip color={T.teal}>{toBn(RECORDS.length)}</Chip>}
       />
       <ScrollView
         horizontal
@@ -119,7 +118,7 @@ export default function HistoryScreen() {
           );
         })}
       </ScrollView>
-      <FreyaButton screen="history" />
+      <FreyaButton screen="history" bottom={90} />
     </View>
   );
 }

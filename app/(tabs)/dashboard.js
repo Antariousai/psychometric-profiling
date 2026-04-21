@@ -140,7 +140,7 @@ export default function DashboardScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text style={{ fontFamily: T.fBnBlack, fontSize: 18, color: T.navy }}>ক</Text>
+                  <Text style={{ fontSize: 22, color: T.navy }}>👤</Text>
                 )}
               </Pressable>
             </View>
@@ -249,7 +249,7 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
 
-      <FreyaButton screen="dashboard" />
+      <FreyaButton screen="dashboard" bottom={90} />
     </View>
   );
 }
