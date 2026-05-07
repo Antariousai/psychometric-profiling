@@ -4,11 +4,11 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../../constants/tokens';
-import { DIMENSIONS } from '../../data/dimensions';
 import BrandHeader from '../../components/BrandHeader';
 import BilingualLabel from '../../components/BilingualLabel';
 import FreyaOrb from '../../components/FreyaOrb';
 import FreyaButton from '../../components/FreyaButton';
+import { useApp } from '../../context/AppContext';
 import { bn as toBn } from '../../utils/format';
 
 const KPIS = [
@@ -24,7 +24,8 @@ const CHART_HEIGHT = 100;
 
 export default function AnalyticsScreen() {
   const router = useRouter();
-  const dimAvg = DIMENSIONS.map((d, i) => ({ ...d, pct: DIM_PCT[i] }));
+  const { dimensions } = useApp();
+  const dimAvg = dimensions.map((d, i) => ({ ...d, pct: DIM_PCT[i] ?? 0 }));
   return (
     <View style={{ flex: 1, backgroundColor: T.cream }}>
       <StatusBar style="dark" />

@@ -1,13 +1,13 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Modal, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../constants/tokens';
 import { QUESTIONS } from '../data/questions';
-import { DIMENSIONS } from '../data/dimensions';
-import { PERSONAS } from '../data/personas';
 import { computeScore } from '../data/scoring';
+import { isSupabaseConfigured } from '../lib/supabase';
+import { saveCreditDecision, savePsychometricAssessmentResult } from '../services/psympSupabase';
 import { useApp } from '../context/AppContext';
 import BilingualLabel from '../components/BilingualLabel';
 import BrandHeader from '../components/BrandHeader';
@@ -63,16 +63,26 @@ function colorForRating(r) {
 
 export default function ResultScreen() {
   const router = useRouter();
-  const { applicantId, answers, addDecision } = useApp();
+  const {
+    applicantId,
+    applicant,
+    answers,
+    addDecision,
+    assessmentQuestions,
+    assessmentSessionId,
+    assessmentApplicantUuid,
+    dimensions: dimensionList,
+  } = useApp();
   const [tab, setTab] = useState('summary');
   const [flagModal, setFlagModal] = useState(false);
   const [toast, setToast] = useState(null);
   const toastAnim = useRef(new Animated.Value(0)).current;
-  const applicant = PERSONAS[applicantId] || PERSONAS.nasrin;
+
+  const questionBank = assessmentQuestions ?? QUESTIONS;
 
   const result = useMemo(() => {
     if (answers && Object.keys(answers).length > 0) {
-      return computeScore(answers, QUESTIONS, DIMENSIONS);
+      return computeScore(answers, questionBank, dimensionList);
     }
     const p = PRESET[applicantId] || PRESET.nasrin;
     const rating = p.rating;
@@ -83,10 +93,28 @@ export default function ResultScreen() {
       overall: p.overall,
       rating, tenure, risk,
       flags: PRESET_FLAG_TEMPLATES.slice(0, p.flagCount),
-      dimScores: DIMENSIONS.map((d, i) => ({ ...d, pct: dims[i] })),
+      dimScores: dimensionList.map((d, i) => ({ ...d, pct: dims[i] })),
       totalPct: dims.reduce((a, b) => a + b, 0) / dims.length,
     };
-  }, [applicantId, answers]);
+  }, [applicantId, answers, questionBank, dimensionList]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !assessmentSessionId) return;
+    if (!answers || Object.keys(answers).length === 0) return;
+    const r = computeScore(answers, questionBank, dimensionList);
+    void savePsychometricAssessmentResult({
+      sessionId: assessmentSessionId,
+      applicantUuid: assessmentApplicantUuid,
+      result: r,
+      answers,
+    });
+  }, [
+    assessmentSessionId,
+    assessmentApplicantUuid,
+    answers,
+    questionBank,
+    dimensionList,
+  ]);
 
   const scoreColor = colorForRating(result.rating);
   const recLoanAmt =
@@ -117,6 +145,17 @@ export default function ResultScreen() {
   const makeDecision = (outcome) => {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const now = new Date();
+    if (isSupabaseConfigured && assessmentSessionId) {
+      void saveCreditDecision({
+        sessionId: assessmentSessionId,
+        applicantUuid: assessmentApplicantUuid,
+        outcome,
+        result: {
+          ...result,
+          rating: String(result.rating).charAt(0),
+        },
+      });
+    }
     addDecision({
       applicantId,
       outcome,

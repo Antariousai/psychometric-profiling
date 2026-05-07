@@ -1,0 +1,713 @@
+[
+  {
+    "id": "q1",
+    "dim": "entrepreneurial",
+    "type": "scenario",
+    "bn": "আপনার এলাকায় হঠাৎ আপনার মতোই একই পণ্য বিক্রেতা একজন এসে দোকান খুলল। প্রথম কাজ কী করবেন?",
+    "en": "A competitor selling the same product opens next to you. Your first move?",
+    "options": [
+      {
+        "bn": "দাম কমিয়ে দেব",
+        "en": "Lower my price",
+        "score": 2
+      },
+      {
+        "bn": "নতুন পণ্য যোগ করব বা সেবা ভিন্ন করব",
+        "en": "Add new products / differentiate",
+        "score": 5
+      },
+      {
+        "bn": "কিছুই করব না, দেখব কী হয়",
+        "en": "Do nothing, wait",
+        "score": 1
+      },
+      {
+        "bn": "তার সাথে কথা বলে এলাকা ভাগ করব",
+        "en": "Negotiate territory",
+        "score": 3
+      }
+    ],
+    "expectedMs": 6000
+  },
+  {
+    "id": "q2",
+    "dim": "entrepreneurial",
+    "type": "scale",
+    "bn": "নতুন কিছু চেষ্টা করতে আমি সবসময় এগিয়ে থাকি।",
+    "en": "I'm always first to try new things.",
+    "scale": {
+      "min": 1,
+      "max": 5,
+      "minBn": "একমত নই",
+      "maxBn": "সম্পূর্ণ একমত",
+      "minEn": "Disagree",
+      "maxEn": "Agree",
+      "steps": [
+        "একমত নই",
+        "কিছুটা একমত",
+        "নিরপেক্ষ",
+        "মোটামুটি একমত",
+        "সম্পূর্ণ একমত"
+      ]
+    },
+    "socialDesirability": true,
+    "expectedMs": 3500
+  },
+  {
+    "id": "q3",
+    "dim": "entrepreneurial",
+    "type": "scenario",
+    "bn": "আপনি কয়টি ভিন্ন আয়ের উপায় (দোকান, চাষ, পশু, শ্রম ইত্যাদি) সামলেছেন গত ৩ বছরে?",
+    "en": "How many different income streams have you managed in the last 3 years?",
+    "options": [
+      {
+        "bn": "শুধু ১টি",
+        "en": "Only 1",
+        "score": 1
+      },
+      {
+        "bn": "২টি",
+        "en": "2",
+        "score": 3
+      },
+      {
+        "bn": "৩টি",
+        "en": "3",
+        "score": 5
+      },
+      {
+        "bn": "৪ বা তার বেশি",
+        "en": "4 or more",
+        "score": 4
+      }
+    ],
+    "crossCheck": "occupation",
+    "expectedMs": 4500
+  },
+  {
+    "id": "q4",
+    "dim": "entrepreneurial",
+    "type": "forced",
+    "bn": "কোনটি আপনার জন্য বেশি জরুরি?",
+    "en": "Which matters more to you?",
+    "options": [
+      {
+        "bn": "প্রতি মাসে নিশ্চিত আয়",
+        "en": "Steady monthly income",
+        "score": 2
+      },
+      {
+        "bn": "ব্যবসা বাড়ানোর সুযোগ",
+        "en": "Chance to grow business",
+        "score": 5
+      }
+    ],
+    "expectedMs": 3000
+  },
+  {
+    "id": "q5",
+    "dim": "risk",
+    "type": "scenario",
+    "bn": "কেউ আপনাকে বলল: \"৫০,০০০ টাকা বিনিয়োগ করলে ২ মাসে ৭৫,০০০ পাবেন।\" আপনি কী করবেন?",
+    "en": "Someone offers: \"Invest 50,000 taka, get 75,000 in 2 months.\" You?",
+    "options": [
+      {
+        "bn": "গ্রহণ করুন",
+        "en": "Accept",
+        "score": 1
+      },
+      {
+        "bn": "বিস্তারিত জিজ্ঞেস করব",
+        "en": "Ask for details first",
+        "score": 4
+      },
+      {
+        "bn": "প্রত্যাখ্যান করব, এটা প্রতারণা",
+        "en": "Refuse — it's a scam",
+        "score": 5
+      },
+      {
+        "bn": "পরিবারের সাথে পরামর্শ করব",
+        "en": "Discuss with family",
+        "score": 4
+      }
+    ],
+    "expectedMs": 5000
+  },
+  {
+    "id": "q6",
+    "dim": "risk",
+    "type": "scale",
+    "bn": "সুযোগ পেলে আমি নিশ্চয়তা ছাড়াও ঝুঁকি নিতে রাজি।",
+    "en": "I take risks without full guarantees when opportunities arise.",
+    "scale": {
+      "min": 1,
+      "max": 5,
+      "minBn": "কখনোই না",
+      "maxBn": "সবসময়",
+      "minEn": "Never",
+      "maxEn": "Always",
+      "steps": [
+        "কখনোই না",
+        "হঠাৎ",
+        "নিরপেক্ষ",
+        "মাঝেমাঝে",
+        "সবসময়"
+      ]
+    },
+    "consistencyPair": "q4",
+    "expectedMs": 3500
+  },
+  {
+    "id": "q7",
+    "dim": "risk",
+    "type": "scenario",
+    "bn": "যদি এই ঋণের ১০,০০০ টাকা আপনার হাতে থাকে, ঝুঁকিপূর্ণ নতুন কাজে বিনিয়োগ করবেন??",
+    "en": "If you had 10,000 taka from the loan, what portion would you put into a risky new venture?",
+    "options": [
+      {
+        "bn": "০%",
+        "en": "0%",
+        "score": 2
+      },
+      {
+        "bn": "২৫%",
+        "en": "25%",
+        "score": 5
+      },
+      {
+        "bn": "৫০%",
+        "en": "50%",
+        "score": 3
+      },
+      {
+        "bn": "১০০%",
+        "en": "100%",
+        "score": 1
+      }
+    ],
+    "expectedMs": 4500
+  },
+  {
+    "id": "q8",
+    "dim": "financial",
+    "type": "math",
+    "bn": "আপনি ১২০ টাকায় একটি পণ্য কিনে ১৫০ টাকায় বিক্রি করলেন। মুনাফার হার কত?",
+    "en": "You buy at 120 tk, sell at 150 tk. What % profit?",
+    "options": [
+      {
+        "bn": "২০%",
+        "en": "20%",
+        "score": 3
+      },
+      {
+        "bn": "২৫%",
+        "en": "25%",
+        "score": 5
+      },
+      {
+        "bn": "৩০%",
+        "en": "30%",
+        "score": 1
+      },
+      {
+        "bn": "জানি না",
+        "en": "Don't know",
+        "score": 2
+      }
+    ],
+    "expectedMs": 8000
+  },
+  {
+    "id": "q9",
+    "dim": "financial",
+    "type": "scale",
+    "bn": "প্রতি মাসে আমি আয়ের কিছু অংশ সঞ্চয় করি।",
+    "en": "I save part of my income every month.",
+    "scale": {
+      "min": 1,
+      "max": 5,
+      "minBn": "কখনো না",
+      "maxBn": "প্রতি মাসে",
+      "minEn": "Never",
+      "maxEn": "Every month",
+      "steps": [
+        "কখনো না",
+        "ইচ্ছা হলে",
+        "নিরপেক্ষ",
+        "চেষ্টা করি",
+        "প্রতি মাসে"
+      ]
+    },
+    "socialDesirability": true,
+    "expectedMs": 3000
+  },
+  {
+    "id": "q10",
+    "dim": "financial",
+    "type": "scenario",
+    "bn": "গত ৬ মাসে আপনি কয়বার ঋণের কিস্তি দেরি করেছেন (যেকোনো উৎস)?",
+    "en": "How many times in the last 6 months were you late for an installment (any source)?",
+    "options": [
+      {
+        "bn": "কখনো না",
+        "en": "Never",
+        "score": 5
+      },
+      {
+        "bn": "১ বার",
+        "en": "Once",
+        "score": 4
+      },
+      {
+        "bn": "২-৩ বার",
+        "en": "2–3 times",
+        "score": 2
+      },
+      {
+        "bn": "৪+ বার",
+        "en": "4+ times",
+        "score": 1
+      }
+    ],
+    "consistencyPair": "q9",
+    "expectedMs": 4000
+  },
+  {
+    "id": "q11",
+    "dim": "financial",
+    "type": "scenario",
+    "bn": "হঠাৎ বাড়িতে ৫,০০০ টাকার জরুরি খরচ। আপনার প্রথম উৎস কোনটি?",
+    "en": "Sudden 5,000 tk emergency at home. Your first source?",
+    "options": [
+      {
+        "bn": "নিজের সঞ্চয়",
+        "en": "My own savings",
+        "score": 5
+      },
+      {
+        "bn": "পরিবার/বন্ধু থেকে ধার",
+        "en": "Family/friend loan",
+        "score": 3
+      },
+      {
+        "bn": "মহাজন/সুদখোর",
+        "en": "Moneylender",
+        "score": 1
+      },
+      {
+        "bn": "সমিতি/এনজিও ঋণ",
+        "en": "NGO/samity loan",
+        "score": 4
+      }
+    ],
+    "crossCheck": "savings",
+    "expectedMs": 4500
+  },
+  {
+    "id": "q12",
+    "dim": "social",
+    "type": "scale",
+    "bn": "বিপদে পড়লে আমার গ্রামে অন্তত ৩ জন সাহায্য করবেন।",
+    "en": "In trouble, at least 3 people in my village will help me.",
+    "scale": {
+      "min": 1,
+      "max": 5,
+      "minBn": "একমত নই",
+      "maxBn": "নিশ্চিত",
+      "minEn": "Disagree",
+      "maxEn": "Certain",
+      "steps": [
+        "একমত নই",
+        "কিছুটা একমত",
+        "নিরপেক্ষ",
+        "মোটামুটি একমত",
+        "নিশ্চিত"
+      ]
+    },
+    "expectedMs": 3500
+  },
+  {
+    "id": "q13",
+    "dim": "social",
+    "type": "scenario",
+    "bn": "আপনি কোন গ্রামীণ সংগঠনের সদস্য (সমিতি, মসজিদ কমিটি, স্কুল কমিটি ইত্যাদি)?",
+    "en": "Member of any local group (samity, mosque/temple committee, school)?",
+    "options": [
+      {
+        "bn": "কোনটিরই না",
+        "en": "None",
+        "score": 1
+      },
+      {
+        "bn": "১টি",
+        "en": "1 group",
+        "score": 3
+      },
+      {
+        "bn": "২টি",
+        "en": "2 groups",
+        "score": 5
+      },
+      {
+        "bn": "৩ বা তার বেশি",
+        "en": "3+",
+        "score": 5
+      }
+    ],
+    "expectedMs": 4000
+  },
+  {
+    "id": "q14",
+    "dim": "social",
+    "type": "scenario",
+    "bn": "আপনার ব্যবসার গ্রাহকদের মধ্যে কতজনকে আপনি ৩ মাসের বেশি সময় ধরে চেনেন?",
+    "en": "How many of your customers have you known for more than 3 months?",
+    "options": [
+      {
+        "bn": "প্রায় কেউ না",
+        "en": "Almost none",
+        "score": 1
+      },
+      {
+        "bn": "কিছু",
+        "en": "A few",
+        "score": 3
+      },
+      {
+        "bn": "বেশিরভাগ",
+        "en": "Most",
+        "score": 5
+      },
+      {
+        "bn": "সবাই",
+        "en": "All",
+        "score": 4
+      }
+    ],
+    "consistencyPair": "q12",
+    "expectedMs": 4500
+  },
+  {
+    "id": "q15",
+    "dim": "business",
+    "type": "math",
+    "bn": "আপনার দোকানে দৈনিক বিক্রি ২,০০০ টাকা। পণ্য কিনতে লাগে ১,৫০০ টাকা। মাসে (৩০ দিন) মোট লাভ কত?",
+    "en": "Daily sales 2,000 tk, cost 1,500 tk. Monthly (30 days) profit?",
+    "options": [
+      {
+        "bn": "১৫,০০০",
+        "en": "15,000",
+        "score": 5
+      },
+      {
+        "bn": "১০,০০০",
+        "en": "10,000",
+        "score": 2
+      },
+      {
+        "bn": "২০,০০০",
+        "en": "20,000",
+        "score": 1
+      },
+      {
+        "bn": "হিসাব করতে পারছি না",
+        "en": "Can't calculate",
+        "score": 1
+      }
+    ],
+    "expectedMs": 10000
+  },
+  {
+    "id": "q16",
+    "dim": "business",
+    "type": "scenario",
+    "bn": "আপনার পণ্যের দাম কে ঠিক করে?",
+    "en": "Who sets the price of your product?",
+    "options": [
+      {
+        "bn": "আমি নিজে বাজার দেখে",
+        "en": "I do, after checking market",
+        "score": 5
+      },
+      {
+        "bn": "পাইকার/মহাজন বলে দেয়",
+        "en": "Wholesaler decides",
+        "score": 2
+      },
+      {
+        "bn": "অন্য দোকান যা নেয় তাই নেই",
+        "en": "I match other shops",
+        "score": 3
+      },
+      {
+        "bn": "নির্দিষ্ট নিয়ম নেই",
+        "en": "No fixed rule",
+        "score": 1
+      }
+    ],
+    "expectedMs": 4500
+  },
+  {
+    "id": "q17",
+    "dim": "business",
+    "type": "scenario",
+    "bn": "আপনি কীভাবে জানেন কোন পণ্যটি বেশি বিক্রি হচ্ছে?",
+    "en": "How do you know which product sells most?",
+    "options": [
+      {
+        "bn": "মাথায় মনে রাখি",
+        "en": "Keep it in head",
+        "score": 2
+      },
+      {
+        "bn": "খাতায় লিখি",
+        "en": "Write in notebook",
+        "score": 4
+      },
+      {
+        "bn": "মোবাইলে হিসাব রাখি",
+        "en": "Track on phone",
+        "score": 5
+      },
+      {
+        "bn": "বিশেষভাবে হিসাব করি না",
+        "en": "Don't really track",
+        "score": 1
+      }
+    ],
+    "expectedMs": 4500
+  },
+  {
+    "id": "q18",
+    "dim": "business",
+    "type": "scenario",
+    "bn": "ব্যবসায় মূলধন (পুঁজি) আর মুনাফার (লাভ) পার্থক্য কী?",
+    "en": "Difference between capital and profit?",
+    "options": [
+      {
+        "bn": "কোনো পার্থক্য নেই",
+        "en": "No difference",
+        "score": 1
+      },
+      {
+        "bn": "পুঁজি বিনিয়োগ, মুনাফা আয়",
+        "en": "Capital = invested, profit = earned",
+        "score": 5
+      },
+      {
+        "bn": "পুঁজি বেশি, মুনাফা কম",
+        "en": "Capital more, profit less",
+        "score": 2
+      },
+      {
+        "bn": "ঠিক জানি না",
+        "en": "Not sure",
+        "score": 1
+      }
+    ],
+    "expectedMs": 7000
+  },
+  {
+    "id": "q19",
+    "dim": "resilience",
+    "type": "scenario",
+    "bn": "গত ২ বছরে আপনার ব্যবসা বা আয়ে সবচেয়ে বড় ধাক্কা কী ছিল?",
+    "en": "Biggest setback to your business/income in the last 2 years?",
+    "options": [
+      {
+        "bn": "কোনো বড় ধাক্কা হয়নি",
+        "en": "No major setback",
+        "score": 3
+      },
+      {
+        "bn": "বন্যা/প্রাকৃতিক দুর্যোগ",
+        "en": "Flood / disaster",
+        "score": 4
+      },
+      {
+        "bn": "পরিবারের অসুস্থতা",
+        "en": "Family illness",
+        "score": 4
+      },
+      {
+        "bn": "ব্যবসায়িক ক্ষতি",
+        "en": "Business loss",
+        "score": 5
+      }
+    ],
+    "socialDesirability": true,
+    "expectedMs": 5000
+  },
+  {
+    "id": "q20",
+    "dim": "resilience",
+    "type": "scenario",
+    "bn": "সেই ধাক্কা থেকে কত দিনে আপনি ঘুরে দাঁড়িয়েছেন?",
+    "en": "How long did it take to recover?",
+    "options": [
+      {
+        "bn": "এখনো ঘুরে দাঁড়াইনি",
+        "en": "Still recovering",
+        "score": 2
+      },
+      {
+        "bn": "৬ মাসের বেশি",
+        "en": "More than 6 months",
+        "score": 3
+      },
+      {
+        "bn": "১-৬ মাস",
+        "en": "1–6 months",
+        "score": 5
+      },
+      {
+        "bn": "১ মাসের কম",
+        "en": "Less than 1 month",
+        "score": 4
+      }
+    ],
+    "consistencyPair": "q19",
+    "expectedMs": 4000
+  },
+  {
+    "id": "q21",
+    "dim": "resilience",
+    "type": "scale",
+    "bn": "কঠিন সময়েও আমি হাল ছাড়ি না।",
+    "en": "I don't give up in hard times.",
+    "scale": {
+      "min": 1,
+      "max": 5,
+      "minBn": "একমত নই",
+      "maxBn": "সম্পূর্ণ একমত",
+      "minEn": "Disagree",
+      "maxEn": "Agree",
+      "steps": [
+        "একমত নই",
+        "কিছুটা একমত",
+        "নিরপেক্ষ",
+        "মোটামুটি একমত",
+        "সম্পূর্ণ একমত"
+      ]
+    },
+    "socialDesirability": true,
+    "expectedMs": 3000
+  },
+  {
+    "id": "q22",
+    "dim": "motivation",
+    "type": "forced",
+    "bn": "ঋণ নিয়ে আপনার প্রথম লক্ষ্য কী?",
+    "en": "First goal with this loan?",
+    "options": [
+      {
+        "bn": "ব্যবসা সম্প্রসারণ",
+        "en": "Expand business",
+        "score": 5
+      },
+      {
+        "bn": "পরিবারের জরুরি খরচ",
+        "en": "Family emergency",
+        "score": 2
+      },
+      {
+        "bn": "অন্য ঋণ শোধ করা",
+        "en": "Pay off another loan",
+        "score": 1
+      },
+      {
+        "bn": "নতুন ব্যবসা শুরু",
+        "en": "Start new business",
+        "score": 4
+      }
+    ],
+    "crossCheck": "loanPurpose",
+    "expectedMs": 4000
+  },
+  {
+    "id": "q23",
+    "dim": "motivation",
+    "type": "scenario",
+    "bn": "৫ বছর পরে আপনি নিজেকে কোথায় দেখেন?",
+    "en": "Where do you see yourself in 5 years?",
+    "options": [
+      {
+        "bn": "একই জায়গায়",
+        "en": "Same place",
+        "score": 1
+      },
+      {
+        "bn": "আরও বড় দোকান/ব্যবসা",
+        "en": "Bigger shop/business",
+        "score": 5
+      },
+      {
+        "bn": "ছেলেমেয়ের ভালো শিক্ষা",
+        "en": "Children's good education",
+        "score": 4
+      },
+      {
+        "bn": "নিজের বাড়ি বানাব",
+        "en": "Build own house",
+        "score": 3
+      }
+    ],
+    "expectedMs": 5000
+  },
+  {
+    "id": "q24",
+    "dim": "motivation",
+    "type": "scale",
+    "bn": "আমি পরিবারের জন্য কঠিন পরিশ্রম করতে রাজি।",
+    "en": "I am willing to work hard for my family.",
+    "scale": {
+      "min": 1,
+      "max": 5,
+      "minBn": "একমত নই",
+      "maxBn": "সম্পূর্ণ একমত",
+      "minEn": "Disagree",
+      "maxEn": "Agree",
+      "steps": [
+        "একমত নই",
+        "কিছুটা একমত",
+        "নিরপেক্ষ",
+        "মোটামুটি একমত",
+        "সম্পূর্ণ একমত"
+      ]
+    },
+    "socialDesirability": true,
+    "expectedMs": 2500
+  },
+  {
+    "id": "q25",
+    "dim": "motivation",
+    "type": "scenario",
+    "bn": "আপনি সপ্তাহে কত ঘণ্টা ব্যবসা/কাজে দেন?",
+    "en": "Hours per week you work on your business?",
+    "options": [
+      {
+        "bn": "২০ ঘণ্টার কম",
+        "en": "Under 20",
+        "score": 1
+      },
+      {
+        "bn": "২০-৪০ ঘণ্টা",
+        "en": "20–40",
+        "score": 3
+      },
+      {
+        "bn": "৪০-৬০ ঘণ্টা",
+        "en": "40–60",
+        "score": 5
+      },
+      {
+        "bn": "৬০+ ঘণ্টা",
+        "en": "60+",
+        "score": 4
+      }
+    ],
+    "consistencyPair": "q24",
+    "expectedMs": 4000
+  }
+]

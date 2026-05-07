@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Pressable, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { T } from '../constants/tokens';
 import { QUESTIONS } from '../data/questions';
-import { DIMENSIONS } from '../data/dimensions';
 import { PERSONA_BIAS } from '../data/personas';
 import { useApp } from '../context/AppContext';
 import BrandHeader from '../components/BrandHeader';
@@ -12,6 +11,14 @@ import Chip from '../components/Chip';
 import FreyaButton from '../components/FreyaButton';
 import FreyaHint from '../components/FreyaHint';
 import { bn as toBn } from '../utils/format';
+import { isSupabaseConfigured } from '../lib/supabase';
+import {
+  fetchPsychometricQuestions,
+  createAssessmentSession,
+  saveAssessmentResponse,
+  completeAssessmentSession,
+  saveAssessmentResponsesBatch,
+} from '../services/psympSupabase';
 
 function speakText(text) {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
@@ -132,12 +139,80 @@ function ScaleInput({ q, answered, onAnswer }) {
 
 export default function AssessmentScreen() {
   const router = useRouter();
-  const { answers: persistedAnswers, setAnswers, applicantId } = useApp();
+  const {
+    answers: persistedAnswers,
+    setAnswers,
+    applicantId,
+    applicant,
+    assessmentSessionId,
+    setAssessmentSessionId,
+    setAssessmentApplicantUuid,
+    setAssessmentQuestions,
+    dimensions,
+  } = useApp();
+  const [questions, setQuestions] = useState(QUESTIONS);
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [idx, setIdx] = useState(0);
   const [localAnswers, setLocalAnswers] = useState(persistedAnswers || {});
   const [freya, setFreya] = useState(false);
   const startAt = useRef(Date.now());
   const firstRender = useRef(true);
+  /** Per-question rows FK to psychometric_questions — only sync when those IDs exist in Supabase. */
+  const canPersistAnswersToDb = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingQuestions(true);
+      setLoadError(null);
+      let list = QUESTIONS;
+      let session = null;
+      let remoteQuestionCount = 0;
+      try {
+        if (isSupabaseConfigured) {
+          let remote = [];
+          try {
+            remote = await fetchPsychometricQuestions();
+          } catch (qe) {
+            if (!cancelled) setLoadError(qe?.message || 'Could not load questions from Supabase');
+          }
+          remoteQuestionCount = remote.length;
+          if (!cancelled && remote.length > 0) {
+            list = remote;
+          } else {
+            list = QUESTIONS;
+          }
+          try {
+            session = await createAssessmentSession(applicantId, applicant);
+          } catch {
+            session = null;
+          }
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(e?.message || 'Supabase error');
+        }
+        list = QUESTIONS;
+        session = null;
+      }
+      if (cancelled) return;
+      canPersistAnswersToDb.current = Boolean(isSupabaseConfigured && remoteQuestionCount > 0);
+      if (isSupabaseConfigured && remoteQuestionCount === 0) {
+        console.warn(
+          '[assessment] psychometric_questions is empty in Supabase — applicant/session still saved; '
+          + 'run supabase/seed_questions.sql to persist per-question answers.',
+        );
+      }
+      setQuestions(list);
+      setAssessmentQuestions(list);
+      setAssessmentSessionId(session?.sessionId ?? null);
+      setAssessmentApplicantUuid(session?.applicantUuid ?? null);
+      setIdx(0);
+      setLoadingQuestions(false);
+    })();
+    return () => { cancelled = true; };
+  }, [applicantId, setAssessmentQuestions, setAssessmentSessionId, setAssessmentApplicantUuid]);
 
   useEffect(() => { startAt.current = Date.now(); }, [idx]);
   useEffect(() => {
@@ -145,25 +220,46 @@ export default function AssessmentScreen() {
     setAnswers(localAnswers);
   }, [localAnswers]);
 
-  const q = QUESTIONS[idx];
-  const dim = DIMENSIONS.find(d => d.id === q.dim);
-  const progress = (idx + 1) / QUESTIONS.length;
-  const answered = localAnswers[q.id];
+  const q = questions[idx];
+  const dim = q ? dimensions.find(d => d.id === q.dim) : null;
+  const progress = questions.length ? (idx + 1) / questions.length : 0;
+  const answered = q ? localAnswers[q.id] : undefined;
+
+  if (loadingQuestions || !q || !dim) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.cream, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <StatusBar style="dark" />
+        <ActivityIndicator size="large" color={T.teal} />
+        {loadError ? (
+          <Text style={{ fontFamily: T.fBn, fontSize: 12, color: T.ink3, marginTop: 16, textAlign: 'center' }}>
+            {loadError}{'\n'}ব্যবহার হচ্ছে অফলাইন প্রশ্নব্যাংক।
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
 
   const answer = (value) => {
     const ms = Date.now() - startAt.current;
     const next = { ...localAnswers, [q.id]: { value, ms } };
     setLocalAnswers(next);
+    if (assessmentSessionId && canPersistAnswersToDb.current) {
+      void saveAssessmentResponse(assessmentSessionId, q.id, value, ms);
+    }
+    const isLast = idx >= questions.length - 1;
     setTimeout(() => {
-      if (idx < QUESTIONS.length - 1) setIdx(idx + 1);
-      else router.replace('/scoring');
+      if (!isLast) setIdx(idx + 1);
+      else {
+        if (assessmentSessionId) void completeAssessmentSession(assessmentSessionId);
+        router.replace('/scoring');
+      }
     }, 260);
   };
 
   const autoFill = () => {
     const bias = PERSONA_BIAS[applicantId] || 0.7;
     const all = {};
-    QUESTIONS.forEach(qq => {
+    questions.forEach(qq => {
       let val;
       if (qq.type === 'scale') {
         val = Math.round(qq.scale.min + bias * (qq.scale.max - qq.scale.min) + (Math.random() - 0.5));
@@ -179,6 +275,12 @@ export default function AssessmentScreen() {
     });
     setLocalAnswers(all);
     setAnswers(all);
+    if (assessmentSessionId && canPersistAnswersToDb.current) {
+      void saveAssessmentResponsesBatch(assessmentSessionId, all);
+      void completeAssessmentSession(assessmentSessionId);
+    } else if (assessmentSessionId) {
+      void completeAssessmentSession(assessmentSessionId);
+    }
     router.replace('/scoring');
   };
 
@@ -187,8 +289,8 @@ export default function AssessmentScreen() {
       <StatusBar style="dark" />
       <BrandHeader
         title={{
-          bn: `প্রশ্ন ${toBn(idx + 1)} / ${toBn(QUESTIONS.length)}`,
-          en: `Question ${idx + 1} of ${QUESTIONS.length}`,
+          bn: `প্রশ্ন ${toBn(idx + 1)} / ${toBn(questions.length)}`,
+          en: `Question ${idx + 1} of ${questions.length}`,
         }}
         subtitle={`${dim.en.toUpperCase()} · ${dim.icon}`}
         onBack={() => (idx > 0 ? setIdx(idx - 1) : router.back())}
@@ -200,13 +302,13 @@ export default function AssessmentScreen() {
           borderRadius: 3, overflow: 'hidden',
           flexDirection: 'row',
         }}>
-          {QUESTIONS.map((qq, i) => {
-            const d = DIMENSIONS.find(dd => dd.id === qq.dim);
+          {questions.map((qq, i) => {
+            const d = dimensions.find(dd => dd.id === qq.dim);
             return (
               <View key={i} style={{
                 flex: 1,
-                marginRight: i < QUESTIONS.length - 1 ? 1 : 0,
-                backgroundColor: i <= idx ? d.color : 'transparent',
+                marginRight: i < questions.length - 1 ? 1 : 0,
+                backgroundColor: i <= idx ? (d?.color || T.teal) : 'transparent',
                 opacity: i === idx ? 1 : i < idx ? 0.85 : 0,
               }} />
             );
@@ -284,7 +386,13 @@ export default function AssessmentScreen() {
         flexDirection: 'row', gap: 8,
       }}>
         <Pressable
-          onPress={() => { if (idx < QUESTIONS.length - 1) setIdx(idx + 1); else router.replace('/scoring'); }}
+          onPress={() => {
+            if (idx < questions.length - 1) setIdx(idx + 1);
+            else {
+              if (assessmentSessionId) void completeAssessmentSession(assessmentSessionId);
+              router.replace('/scoring');
+            }
+          }}
           style={{
             flex: 1, paddingVertical: 11, borderRadius: 10,
             borderWidth: 1, borderColor: T.border2,

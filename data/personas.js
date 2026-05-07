@@ -1,3 +1,54 @@
+/** Empty template for a newly generated applicant slug (`u…` from intake). */
+export const BLANK_APPLICANT = {
+  id: '',
+  name: '',
+  nameEn: '',
+  age: '',
+  gender: 'F',
+  village: '',
+  villageEn: '',
+  occupation: '',
+  occupationEn: '',
+  loanAsk: '',
+  loanPurpose: '',
+  loanPurposeEn: '',
+  savings: '',
+  dependents: '',
+  nid: '',
+  phone: '',
+  avatar: '+',
+  tint: '#2EC4B6',
+};
+
+export function applicantDisplayFallback(slug) {
+  return {
+    id: slug,
+    name: '—',
+    nameEn: String(slug),
+    village: '',
+    loanAsk: 0,
+    avatar: '?',
+    tint: '#94A3B8',
+  };
+}
+
+/** Coerce string-y intake values for scoring / loan math. */
+export function coerceApplicantProfile(p) {
+  if (!p || typeof p !== 'object') return p;
+  const n = (v) => {
+    if (v === '' || v == null) return 0;
+    const x = Number(String(v).replace(/,/g, ''));
+    return Number.isFinite(x) ? x : 0;
+  };
+  return {
+    ...p,
+    age: n(p.age),
+    loanAsk: n(p.loanAsk),
+    savings: n(p.savings),
+    dependents: n(p.dependents),
+  };
+}
+
 export const PERSONAS = {
   nasrin: {
     id: 'nasrin', name: 'নাসরিন বেগম', nameEn: 'Nasrin Begum', age: 34, gender: 'F',

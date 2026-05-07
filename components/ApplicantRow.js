@@ -1,14 +1,13 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { T } from '../constants/tokens';
-import { PERSONAS } from '../data/personas';
+import { PERSONAS, applicantDisplayFallback } from '../data/personas';
 import Chip from './Chip';
 import { bn as toBn } from '../utils/format';
 import { fmtTk } from '../utils/format';
 
 export default function ApplicantRow({ row, onPress }) {
-  const p = PERSONAS[row.id];
-  if (!p) return null;
+  const p = PERSONAS[row.id] || applicantDisplayFallback(row.id);
   const color = row.status === 'completed'
     ? (row.rating === 'A' ? T.green : row.rating === 'B' ? T.teal : row.rating === 'C' ? T.amber : T.coral)
     : T.gold;

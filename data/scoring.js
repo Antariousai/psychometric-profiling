@@ -116,9 +116,17 @@ const INCONSISTENCY_NOTES = {
     bn: 'দ্রুত ঘুরে দাঁড়ানোর দাবি করলেন (প্র২০), কিন্তু আগের প্রশ্নে বড় কোনো ধাক্কাই হয়নি বলেছেন (প্র১৯) — দুটো উত্তরের মধ্যে মৌলিক বৈপরীত্য আছে।',
     en: 'Claims fast recovery (Q20), but said there was no major setback (Q19) — the two answers fundamentally contradict each other.',
   },
-  'q25-q24': {
-    bn: 'পরিবারের জন্য সম্পূর্ণ একমত কঠোর পরিশ্রম করতে (প্র২৪), কিন্তু সাপ্তাহিক কাজের ঘণ্টা কম বলেছেন (প্র২৫) — কথা আর বাস্তব আচরণে মিল নেই।',
-    en: 'Strongly agrees to work hard for family (Q24) but reports low weekly work hours (Q25) — stated attitude does not match reported behaviour.',
+  'q26-q25': {
+    bn: 'পরিবারের জন্য কঠোর পরিশ্রমে সম্পূর্ণ একমত বলেছেন, কিন্তু সাপ্তাহিক কর্মঘণ্টা কম দেখিয়েছেন — মনোভাব আর বাস্তব আচরণ মিলছে না।',
+    en: 'Strong agreement to work hard for family but low weekly hours — attitude and behaviour do not align.',
+  },
+  'q32-q10': {
+    bn: 'মাসে সঞ্চয় করার অভ্যাস দেখিয়েছেন, কিন্তু কিস্তি সময়মতো দেওয়ার ইতিহাস দুর্বল — মিলিয়ে সাক্ষাৎকারে যাচাই করুন।',
+    en: 'Reports saving habits but weak on-time instalment history — verify in interview.',
+  },
+  'q22-q21': {
+    bn: 'ধাক্কা থেকে দ্রুত ঘুরে দাঁড়ানোর কথা বলেছেন, কিন্তু আগের প্রশ্নের ধাক্কার বর্ণনার সাথে মিলছে না।',
+    en: 'Recovery claim may not match the setback described earlier — probe for consistency.',
   },
 };
 

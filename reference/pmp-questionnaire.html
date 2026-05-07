@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>সম্ভাব্য সদস্য প্রোফাইল (PMP) — Antarious</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1a6b5a;
+    --primary-light: #2a8c76;
+    --primary-dark: #0f4a3d;
+    --accent: #f4a418;
+    --accent-soft: #fff3d6;
+    --bg: #f0f4f2;
+    --surface: #ffffff;
+    --surface-alt: #f7faf8;
+    --border: #d1e4de;
+    --text: #1c2e28;
+    --text-muted: #5a7a72;
+    --text-light: #8aa09a;
+    --success: #2e9b6f;
+    --danger: #d9534f;
+    --tag-bg: #e3f2ed;
+    --shadow: 0 2px 16px rgba(26,107,90,0.08);
+    --shadow-hover: 0 6px 28px rgba(26,107,90,0.15);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hind Siliguri', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: var(--primary-dark);
+    color: white;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  }
+  .site-header .logo {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: white;
+  }
+  .site-header .logo span { color: var(--accent); }
+  .header-subtitle {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.3px;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    background: var(--primary-dark);
+    padding: 0 24px 16px;
+    position: sticky;
+    top: 60px;
+    z-index: 99;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+  }
+  .progress-track {
+    height: 5px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* ── SECTION TABS ── */
+  .section-nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    display: flex;
+    padding: 0 16px;
+    gap: 4px;
+    position: sticky;
+    top: 101px;
+    z-index: 98;
+  }
+  .section-nav::-webkit-scrollbar { display: none; }
+  .sec-tab {
+    padding: 12px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: var(--transition);
+    user-select: none;
+  }
+  .sec-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .sec-tab .sec-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    margin-right: 5px;
+    vertical-align: middle;
+    transition: var(--transition);
+  }
+  .sec-tab.complete .sec-dot { background: var(--success); }
+  .sec-tab.active .sec-dot { background: var(--primary); }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 28px 16px 80px;
+  }
+
+  /* ── SECTION BLOCK ── */
+  .section-block {
+    margin-bottom: 40px;
+    display: none;
+  }
+  .section-block.active { display: block; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--border);
+  }
+  .sec-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .sec-title-wrap {}
+  .sec-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+  .sec-desc {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  /* ── QUESTION CARD ── */
+  .q-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    transition: var(--transition);
+    position: relative;
+  }
+  .q-card:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-hover);
+  }
+  .q-card.answered {
+    border-color: #a8d5c8;
+    background: #fdfffe;
+  }
+  .q-card.answered::after {
+    content: '✓';
+    position: absolute;
+    top: 14px; right: 16px;
+    color: var(--success);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .q-number {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .q-badge {
+    background: var(--tag-bg);
+    color: var(--primary);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+
+  .q-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── OPTIONS ── */
+  .options-grid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1fr;
+  }
+  .options-grid.two-col { grid-template-columns: 1fr 1fr; }
+  .options-grid.three-col { grid-template-columns: 1fr 1fr 1fr; }
+
+  @media (max-width: 560px) {
+    .options-grid.two-col,
+    .options-grid.three-col { grid-template-columns: 1fr; }
+  }
+
+  .opt-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--surface-alt);
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+    user-select: none;
+  }
+  .opt-label:hover {
+    border-color: var(--primary-light);
+    background: #ecf7f3;
+    color: var(--primary-dark);
+  }
+  .opt-label input[type="radio"],
+  .opt-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    min-width: 18px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 1px;
+    position: relative;
+    background: white;
+  }
+  .opt-label input[type="checkbox"] {
+    border-radius: 5px;
+  }
+  .opt-label input[type="radio"]:checked,
+  .opt-label input[type="checkbox"]:checked {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .opt-label input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: white;
+  }
+  .opt-label input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-52%);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .opt-label:has(input:checked) {
+    border-color: var(--primary);
+    background: #e8f5ef;
+    color: var(--primary-dark);
+    font-weight: 500;
+  }
+
+  /* Likert Scale */
+  .likert-wrap {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .likert-opt {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+  }
+  .likert-opt input { display: none; }
+  .likert-btn {
+    display: block;
+    padding: 8px 4px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    background: var(--surface-alt);
+    transition: var(--transition);
+    line-height: 1.3;
+    text-align: center;
+  }
+  .likert-opt input:checked + .likert-btn {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+  }
+  .likert-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-light);
+    margin-top: 5px;
+    padding: 0 2px;
+  }
+
+  /* Note / hint */
+  .q-note {
+    background: #fff8e6;
+    border: 1px solid #f0d080;
+    border-radius: 7px;
+    padding: 10px 13px;
+    font-size: 12.5px;
+    color: #7a5a10;
+    margin-bottom: 12px;
+  }
+  .q-note strong { color: #5a3e0a; }
+
+  /* Text input */
+  .q-input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 13px;
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface-alt);
+    transition: var(--transition);
+    resize: none;
+  }
+  .q-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+  }
+
+  /* ── NAV BUTTONS ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    gap: 12px;
+  }
+  .btn {
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition);
+  }
+  .btn-outline {
+    background: white;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+  }
+  .btn-outline:hover { background: var(--tag-bg); }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .nav-center {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* ── SUBMIT PAGE ── */
+  .submit-screen {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .submit-screen .check-circle {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--success);
+    color: white;
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: pop 0.4s cubic-bezier(0.36,0.07,0.19,0.97);
+  }
+  @keyframes pop {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  /* ── SCORE BADGE ── */
+  .q-score-hint {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* helpers */
+  .mt-8 { margin-top: 8px; }
+  .multi-hint {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div>
+    <div class="logo">ant<span>arious</span></div>
+    <div class="header-subtitle">Potential Member Profile · PMP</div>
+  </div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.5)">সম্ভাব্য সদস্য মূল্যায়ন</div>
+</header>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-meta">
+    <span id="prog-label">অগ্রগতি: ০%</span>
+    <span id="prog-count">প্রশ্ন ০ / ৪০</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="prog-fill"></div>
+  </div>
+</div>
+
+<!-- SECTION TABS -->
+<nav class="section-nav" id="secNav">
+  <div class="sec-tab active" data-sec="0"><span class="sec-dot"></span>ব্যবসায়িক দক্ষতা</div>
+  <div class="sec-tab" data-sec="1"><span class="sec-dot"></span>আর্থিক ব্যবস্থাপনা</div>
+  <div class="sec-tab" data-sec="2"><span class="sec-dot"></span>ঝুঁকি মনোভাব</div>
+  <div class="sec-tab" data-sec="3"><span class="sec-dot"></span>সামাজিক পুঁজি</div>
+  <div class="sec-tab" data-sec="4"><span class="sec-dot"></span>বিপদ কাটানোর শক্তি</div>
+  <div class="sec-tab" data-sec="5"><span class="sec-dot"></span>আকাঙ্ক্ষা ও লক্ষ্য</div>
+  <div class="sec-tab" data-sec="6"><span class="sec-dot"></span>সঞ্চয় ও বীমা</div>
+  <div class="sec-tab" data-sec="7"><span class="sec-dot"></span>ঋণ মনোভাব</div>
+</nav>
+
+<main class="main">
+
+<!-- ═══════════════════════════════════════════
+     SECTION 1 — ব্যবসায়িক দক্ষতা
+═══════════════════════════════════════════ -->
+<div class="section-block active" id="sec-0">
+  <div class="section-header">
+    <div class="sec-icon">💼</div>
+    <div class="sec-title-wrap">
+      <div class="sec-title">ব্যবসায়িক দক্ষতা</div>
+      <div class="sec-desc">ব্যবসা পরিচালনা ও সিদ্ধান্ত গ্রহণের সক্ষমতা</div>
+    </div>
+  </div>
+
+  <!-- Q1 -->
+  <div class="q-card" id="qc-1">
+    <div class="q-number"><span>প্রশ্ন ১</span><span class="q-badge">ব্যবসায়িক কৌশল</span></div>
+    <div class="q-text">আপনার এলাকায় হঠাৎ আপনার মতোই একই পণ্য বিক্রেতা একজন এসে দোকান খুলল। প্রথম কাজ কী করবেন?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q1" value="a"> চিন্তা করব না, ব্যবসা চালিয়ে যাব</label>
+      <label class="opt-label"><input type="radio" name="q1" value="b"> গ্রাহকদের সাথে সম্পর্ক আরও ভালো করব</label>
+      <label class="opt-label"><input type="radio" name="q1" value="c"> পণ্যের মান ও সেবার মান বাড়াব</label>
+      <label class="opt-label"><input type="radio" name="q1" value="d"> দাম কমিয়ে দেব যাতে বেশি গ্রাহক আসে</label>
+      <label class="opt-label"><input type="radio" name="q1" value="e"> নতুন পণ্য বা সেবা যোগ করব</label>
+      <label class="opt-label"><input type="radio" name="q1" value="f"> প্রতিযোগীর দোকান ও পণ্য পর্যবেক্ষণ করব</label>
+      <label class="opt-label"><input type="radio" name="q1" value="g"> পুরনো গ্রাহকদের বিশেষ সুবিধা দেব</label>
+      <label class="opt-label"><input type="radio" name="q1" value="h"> আমার ব্যবসার ধরন বা এলাকা পরিবর্তন করব</label>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-card" id="qc-2">
+    <div class="q-number"><span>প্রশ্ন ২</span><span class="q-badge">সেবার মান</span></div>
+    <div class="q-text">"আমি সবসময় গ্রাহককে উন্নত সেবা দিতে চেষ্টা করি" — এই কথার সাথে আপনি কতটুকু একমত?</div>
+    <div class="likert-wrap">
+      <div class="likert-opt"><input type="radio" name="q2" value="1" id="q2_1"><label class="likert-btn" for="q2_1">একদমই একমত নই</label></div>
+      <div class="likert-opt"><input type="radio" name="q2" value="2" id="q2_2"><label class="likert-btn" for="q2_2">একমত নই</label></div>
+      <div class="likert-opt"><input type="radio" name="q2" value="3" id="q2_3"><label class="likert-btn" for="q2_3">মাঝামাঝি</label></div>
+      <div class="likert-opt"><input type="radio" name="q2" value="4" id="q2_4"><label class="likert-btn" for="q2_4">একমত</label></div>
+      <div class="likert-opt"><input type="radio" name="q2" value="5" id="q2_5"><label class="likert-btn" for="q2_5">সম্পূর্ণ একমত</label></div>
+    </div>
+    <div class="likert-labels"><span>একদমই না</span><span>সম্পূর্ণ একমত</span></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-card" id="qc-3">
+    <div class="q-number"><span>প্রশ্ন ৩</span><span class="q-badge">পণ্য জ্ঞান</span></div>
+    <div class="q-text">আপনি কীভাবে জানেন কোন পণ্যটি বেশি বিক্রি হচ্ছে?</div>
+    <p class="multi-hint">একাধিক উত্তর বেছে নিতে পারেন</p>
+    <div class="options-grid">
+      <label class="opt-label"><input type="checkbox" name="q3" value="a"> প্রতিদিনের বিক্রির হিসাব খাতায় লিখে রাখি</label>
+      <label class="opt-label"><input type="checkbox" name="q3" value="b"> কোন পণ্য বেশি দ্রুত শেষ হয় সেটা দেখি</label>
+      <label class="opt-label"><input type="checkbox" name="q3" value="c"> গ্রাহকরা কোন পণ্যের কথা বেশি জিজ্ঞেস করে সেটা খেয়াল রাখি</label>
+      <label class="opt-label"><input type="checkbox" name="q3" value="d"> অনুমানে বুঝতে পারি</label>
+      <label class="opt-label"><input type="checkbox" name="q3" value="e"> মোবাইল অ্যাপ বা হিসাবের সফটওয়্যার ব্যবহার করি</label>
+      <label class="opt-label"><input type="checkbox" name="q3" value="f"> মাসের শেষে স্টক গণনা করে বুঝি</label>
+      <label class="opt-label"><input type="checkbox" name="q3" value="g"> কোনো নির্দিষ্ট পদ্ধতি নেই</label>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-card" id="qc-4">
+    <div class="q-number"><span>প্রশ্ন ৪</span><span class="q-badge">মূল্য নির্ধারণ</span></div>
+    <div class="q-text">আপনার পণ্যের দাম কে ঠিক করে?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q4" value="a"> আমি নিজে ঠিক করি</label>
+      <label class="opt-label"><input type="radio" name="q4" value="b"> বাজারের সাথে মিলিয়ে ঠিক করি</label>
+      <label class="opt-label"><input type="radio" name="q4" value="c"> সরবরাহকারী/পাইকার নির্ধারণ করে দেয়</label>
+      <label class="opt-label"><input type="radio" name="q4" value="d"> পরিবারের সিনিয়র সদস্য ঠিক করেন</label>
+      <label class="opt-label"><input type="radio" name="q4" value="e"> প্রতিযোগীর দামের উপর নির্ভর করে ঠিক করি</label>
+      <label class="opt-label"><input type="radio" name="q4" value="f"> উৎপাদন খরচ বের করে লাভ যোগ করে ঠিক করি</label>
+      <label class="opt-label"><input type="radio" name="q4" value="g"> এলাকার অন্য দোকানিদের সাথে মিলে ঠিক করি</label>
+    </div>
+  </div>
+
+  <!-- Q5 — Math -->
+  <div class="q-card" id="qc-5">
+    <div class="q-number"><span>প্রশ্ন ৫</span><span class="q-badge">হিসাব-নিকাশ</span></div>
+    <div class="q-note">📊 <strong>হিসাবের প্রশ্ন:</strong> আপনার দোকানে দৈনিক বিক্রি ২,০০০ টাকা। পণ্য কিনতে লাগে ১,৫০০ টাকা। মাসে (৩০ দিন) মোট লাভ কত?</div>
+    <div class="q-text">সঠিক উত্তরটি বেছে নিন:</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q5" value="a"> ৯,০০০ টাকা</label>
+      <label class="opt-label"><input type="radio" name="q5" value="b"> ১২,০০০ টাকা</label>
+      <label class="opt-label"><input type="radio" name="q5" value="c" data-correct="true"> ১৫,০০০ টাকা ✓</label>
+      <label class="opt-label"><input type="radio" name="q5" value="d"> ১৮,০০০ টাকা</label>
+      <label class="opt-label"><input type="radio" name="q5" value="e"> ২০,০০০ টাকা</label>
+      <label class="opt-label"><input type="radio" name="q5" value="f"> হিসাব করতে পারছি না</label>
+    </div>
+  </div>
+
+  <!-- Q6 — Math -->
+  <div class="q-card" id="qc-6">
+    <div class="q-number"><span>প্রশ্ন ৬</span><span class="q-badge">মুনাফার হার</span></div>
+    <div class="q-note">📊 <strong>হিসাবের প্রশ্ন:</strong> আপনি ১২০ টাকায় একটি পণ্য কিনে ১৫০ টাকায় বিক্রি করলেন। মুনাফার হার কত?</div>
+    <div class="q-text">সঠিক উত্তরটি বেছে নিন:</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q6" value="a"> ২০%</label>
+      <label class="opt-label"><input type="radio" name="q6" value="b" data-correct="true"> ২৫% ✓</label>
+      <label class="opt-label"><input type="radio" name="q6" value="c"> ৩০%</label>
+      <label class="opt-label"><input type="radio" name="q6" value="d"> ৩৩%</label>
+      <label class="opt-label"><input type="radio" name="q6" value="e"> ১৫%</label>
+      <label class="opt-label"><input type="radio" name="q6" value="f"> হিসাব করতে পারছি না</label>
+    </div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="q-card" id="qc-7">
+    <div class="q-number"><span>প্রশ্ন ৭</span><span class="q-badge">আর্থিক জ্ঞান</span></div>
+    <div class="q-text">ব্যবসায় মূলধন (পুঁজি) আর মুনাফার (লাভ) পার্থক্য কী বলে আপনি মনে করেন?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q7" value="a"> দুটো একই জিনিস</label>
+      <label class="opt-label"><input type="radio" name="q7" value="b"> মূলধন হলো ব্যবসার শুরুর টাকা, মুনাফা হলো বিক্রির পর বাড়তি আয়</label>
+      <label class="opt-label"><input type="radio" name="q7" value="c"> মূলধন হলো ব্যাংকের টাকা, মুনাফা হলো নিজের টাকা</label>
+      <label class="opt-label"><input type="radio" name="q7" value="d"> মূলধন মানে ঋণ, মুনাফা মানে সঞ্চয়</label>
+      <label class="opt-label"><input type="radio" name="q7" value="e"> জানি না / স্পষ্ট ধারণা নেই</label>
+    </div>
+  </div>
+</div><!-- /sec-0 -->
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 2 — আর্থিক ব্যবস্থাপনা
+═══════════════════════════════════════════ -->
+<div class="section-block" id="sec-1">
+  <div class="section-header">
+    <div class="sec-icon">💰</div>
+    <div class="sec-title-wrap">
+      <div class="sec-title">আর্থিক ব্যবস্থাপনা</div>
+      <div class="sec-desc">আয়, ব্যয় ও আর্থিক পরিকল্পনার দক্ষতা</div>
+    </div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="q-card" id="qc-8">
+    <div class="q-number"><span>প্রশ্ন ৮</span><span class="q-badge">বিকল্প আয়</span></div>
+    <div class="q-text">ব্যবসার পাশাপাশি আপনার বিকল্প আয়ের উৎস কী কী?</div>
+    <p class="multi-hint">প্রযোজ্য সব উত্তর বেছে নিন</p>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="checkbox" name="q8" value="a"> কৃষি/চাষাবাদ</label>
+      <label class="opt-label"><input type="checkbox" name="q8" value="b"> হাঁস-মুরগি বা গবাদিপশু পালন</label>
+      <label class="opt-label"><input type="checkbox" name="q8" value="c"> ছোট চাকরি/খণ্ডকালীন কাজ</label>
+      <label class="opt-label"><input type="checkbox" name="q8" value="d"> পরিবারের অন্য সদস্যের আয়</label>
+      <label class="opt-label"><input type="checkbox" name="q8" value="e"> সেলাই/হস্তশিল্প/কুটিরশিল্প</label>
+      <label class="opt-label"><input type="checkbox" name="q8" value="f"> বিদেশ থেকে রেমিট্যান্স</label>
+      <label class="opt-label"><input type="checkbox" name="q8" value="g"> বাড়ি/জমি ভাড়া</label>
+      <label class="opt-label"><input type="checkbox" name="q8" value="h"> অন্য কোনো ব্যবসা</label>
+      <label class="opt-label"><input type="checkbox" name="q8" value="i"> কোনো বিকল্প আয় নেই</label>
+    </div>
+  </div>
+
+  <!-- Q9 -->
+  <div class="q-card" id="qc-9">
+    <div class="q-number"><span>প্রশ্ন ৯</span><span class="q-badge">অগ্রাধিকার</span></div>
+    <div class="q-text">আপনার কাছে কোনটি বেশি জরুরি?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q9" value="a"> পরিবারের দৈনন্দিন চাহিদা মেটানো</label>
+      <label class="opt-label"><input type="radio" name="q9" value="b"> পরিবারের আয় বাড়ানো</label>
+      <label class="opt-label"><input type="radio" name="q9" value="c"> ব্যবসার মূলধন বাড়ানো</label>
+      <label class="opt-label"><input type="radio" name="q9" value="d"> সন্তানদের পড়াশোনা ও ভবিষ্যৎ নিশ্চিত করা</label>
+      <label class="opt-label"><input type="radio" name="q9" value="e"> ঋণমুক্ত হওয়া</label>
+      <label class="opt-label"><input type="radio" name="q9" value="f"> বাড়ি বা সম্পদ তৈরি করা</label>
+    </div>
+  </div>
+
+  <!-- Q10 -->
+  <div class="q-card" id="qc-10">
+    <div class="q-number"><span>প্রশ্ন ১০</span><span class="q-badge">সঞ্চয় অভ্যাস</span></div>
+    <div class="q-text">"প্রতি মাসে আমি আয়ের কিছু অংশ সঞ্চয় করি" — এই কথার সাথে আপনি কতটুকু একমত?</div>
+    <div class="likert-wrap">
+      <div class="likert-opt"><input type="radio" name="q10" value="1" id="q10_1"><label class="likert-btn" for="q10_1">একদমই না</label></div>
+      <div class="likert-opt"><input type="radio" name="q10" value="2" id="q10_2"><label class="likert-btn" for="q10_2">হঠাৎ হঠাৎ</label></div>
+      <div class="likert-opt"><input type="radio" name="q10" value="3" id="q10_3"><label class="likert-btn" for="q10_3">মাঝে মাঝে</label></div>
+      <div class="likert-opt"><input type="radio" name="q10" value="4" id="q10_4"><label class="likert-btn" for="q10_4">প্রায়ই</label></div>
+      <div class="likert-opt"><input type="radio" name="q10" value="5" id="q10_5"><label class="likert-btn" for="q10_5">সবসময়</label></div>
+    </div>
+    <div class="likert-labels"><span>একদমই না</span><span>সবসময়</span></div>
+  </div>
+
+  <!-- Q11 -->
+  <div class="q-card" id="qc-11">
+    <div class="q-number"><span>প্রশ্ন ১১</span><span class="q-badge">লাভের হার</span></div>
+    <div class="q-text">কত শতাংশ মুনাফা (Profit %) হলে আপনি ব্যবসা টিকিয়ে রাখতে পারবেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q11" value="a"> ১০% এর কম</label>
+      <label class="opt-label"><input type="radio" name="q11" value="b"> ১০% — ২০%</label>
+      <label class="opt-label"><input type="radio" name="q11" value="c"> ২১% — ৩০%</label>
+      <label class="opt-label"><input type="radio" name="q11" value="d"> ৩১% — ৫০%</label>
+      <label class="opt-label"><input type="radio" name="q11" value="e"> ৫০% এর বেশি</label>
+      <label class="opt-label"><input type="radio" name="q11" value="f"> জানি না / হিসাব করিনি</label>
+    </div>
+  </div>
+
+  <!-- Q12 -->
+  <div class="q-card" id="qc-12">
+    <div class="q-number"><span>প্রশ্ন ১২</span><span class="q-badge">ব্যবসার আকার</span></div>
+    <div class="q-text">প্রতি মাসে কত টাকা পুঁজি খাটিয়ে আপনি কত টাকার ব্যবসা করেন?</div>
+    <div class="q-text" style="font-size:13px;font-weight:400;color:var(--text-muted);margin-bottom:10px">প্রথমে মাসিক পুঁজি বেছে নিন:</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q12_capital" value="a"> পুঁজি: ৫,০০০ টাকার কম</label>
+      <label class="opt-label"><input type="radio" name="q12_capital" value="b"> পুঁজি: ৫,০০০ — ২০,০০০</label>
+      <label class="opt-label"><input type="radio" name="q12_capital" value="c"> পুঁজি: ২০,০০১ — ৫০,০০০</label>
+      <label class="opt-label"><input type="radio" name="q12_capital" value="d"> পুঁজি: ৫০,০০১ — ১ লাখ</label>
+      <label class="opt-label"><input type="radio" name="q12_capital" value="e"> পুঁজি: ১ লাখের বেশি</label>
+    </div>
+    <div class="q-text mt-8" style="font-size:13px;font-weight:400;color:var(--text-muted)">মাসিক মোট বিক্রি/টার্নওভার:</div>
+    <div class="options-grid two-col mt-8">
+      <label class="opt-label"><input type="radio" name="q12_revenue" value="a"> বিক্রি: ১০,০০০ টাকার কম</label>
+      <label class="opt-label"><input type="radio" name="q12_revenue" value="b"> বিক্রি: ১০,০০০ — ৩০,০০০</label>
+      <label class="opt-label"><input type="radio" name="q12_revenue" value="c"> বিক্রি: ৩০,০০১ — ৭৫,০০০</label>
+      <label class="opt-label"><input type="radio" name="q12_revenue" value="d"> বিক্রি: ৭৫,০০১ — ২ লাখ</label>
+      <label class="opt-label"><input type="radio" name="q12_revenue" value="e"> বিক্রি: ২ লাখের বেশি</label>
+    </div>
+  </div>
+</div><!-- /sec-1 -->
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 3 — ঝুঁকি মনোভাব
+═══════════════════════════════════════════ -->
+<div class="section-block" id="sec-2">
+  <div class="section-header">
+    <div class="sec-icon">⚖️</div>
+    <div class="sec-title-wrap">
+      <div class="sec-title">ঝুঁকি মনোভাব</div>
+      <div class="sec-desc">আর্থিক ঝুঁকি সম্পর্কে দৃষ্টিভঙ্গি ও সিদ্ধান্ত গ্রহণ</div>
+    </div>
+  </div>
+
+  <!-- Q13 -->
+  <div class="q-card" id="qc-13">
+    <div class="q-number"><span>প্রশ্ন ১৩</span><span class="q-badge">বিনিয়োগ সিদ্ধান্ত</span></div>
+    <div class="q-text">কেউ আপনাকে বলল: "৫০,০০০ টাকা বিনিয়োগ করলে ২ মাসে ৭৫,০০০ পাবেন।" আপনি কী করবেন?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q13" value="a"> সাথে সাথে বিনিয়োগ করব, সুযোগ হাতছাড়া করব না</label>
+      <label class="opt-label"><input type="radio" name="q13" value="b"> আগে ভালো করে খোঁজ-খবর নেব, তারপর সিদ্ধান্ত নেব</label>
+      <label class="opt-label"><input type="radio" name="q13" value="c"> পরিবারের সাথে আলোচনা করব</label>
+      <label class="opt-label"><input type="radio" name="q13" value="d"> বিশ্বস্ত কারো কাছ থেকে পরামর্শ নেব</label>
+      <label class="opt-label"><input type="radio" name="q13" value="e"> এত বেশি লাভের কথা শুনলে সন্দেহ হয়, বিনিয়োগ করব না</label>
+      <label class="opt-label"><input type="radio" name="q13" value="f"> সামান্য পরিমাণ দিয়ে পরীক্ষামূলকভাবে করে দেখব</label>
+      <label class="opt-label"><input type="radio" name="q13" value="g"> সরাসরি না করে দেব</label>
+    </div>
+  </div>
+
+  <!-- Q14 -->
+  <div class="q-card" id="qc-14">
+    <div class="q-number"><span>প্রশ্ন ১৪</span><span class="q-badge">ঝুঁকি গ্রহণ</span></div>
+    <div class="q-text">"সুযোগ পেলে আমি গ্যারান্টি ছাড়াও ঝুঁকি নিতে রাজি" — এর সাথে আপনি কতটুকু একমত?</div>
+    <div class="likert-wrap">
+      <div class="likert-opt"><input type="radio" name="q14" value="1" id="q14_1"><label class="likert-btn" for="q14_1">একদমই না</label></div>
+      <div class="likert-opt"><input type="radio" name="q14" value="2" id="q14_2"><label class="likert-btn" for="q14_2">খুব কমই</label></div>
+      <div class="likert-opt"><input type="radio" name="q14" value="3" id="q14_3"><label class="likert-btn" for="q14_3">পরিস্থিতি বুঝে</label></div>
+      <div class="likert-opt"><input type="radio" name="q14" value="4" id="q14_4"><label class="likert-btn" for="q14_4">সাধারণত রাজি</label></div>
+      <div class="likert-opt"><input type="radio" name="q14" value="5" id="q14_5"><label class="likert-btn" for="q14_5">সম্পূর্ণ রাজি</label></div>
+    </div>
+    <div class="likert-labels"><span>একেবারেই না</span><span>সম্পূর্ণ রাজি</span></div>
+  </div>
+
+  <!-- Q15 -->
+  <div class="q-card" id="qc-15">
+    <div class="q-number"><span>প্রশ্ন ১৫</span><span class="q-badge">ঋণের বিনিয়োগ</span></div>
+    <div class="q-text">ধরুন, ঋণের ১০ হাজার টাকা আপনার হাতে আছে। ঝুঁকিপূর্ণ নতুন কাজে কতটুকু বিনিয়োগ করবেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q15" value="a"> কিছুই না, পুরোটা নিরাপদ কাজে লাগাব</label>
+      <label class="opt-label"><input type="radio" name="q15" value="b"> ১,০০০ — ২,০০০ টাকা (১০-২০%)</label>
+      <label class="opt-label"><input type="radio" name="q15" value="c"> ২,০০১ — ৪,০০০ টাকা (২০-৪০%)</label>
+      <label class="opt-label"><input type="radio" name="q15" value="d"> ৪,০০১ — ৬,০০০ টাকা (৪০-৬০%)</label>
+      <label class="opt-label"><input type="radio" name="q15" value="e"> ৬,০০১ — ৮,০০০ টাকা (৬০-৮০%)</label>
+      <label class="opt-label"><input type="radio" name="q15" value="f"> প্রায় পুরোটাই (৮০% এর বেশি)</label>
+    </div>
+  </div>
+</div><!-- /sec-2 -->
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 4 — সামাজিক পুঁজি
+═══════════════════════════════════════════ -->
+<div class="section-block" id="sec-3">
+  <div class="section-header">
+    <div class="sec-icon">🤝</div>
+    <div class="sec-title-wrap">
+      <div class="sec-title">সামাজিক পুঁজি</div>
+      <div class="sec-desc">সামাজিক সম্পর্ক ও নেটওয়ার্কের শক্তি</div>
+    </div>
+  </div>
+
+  <!-- Q16 -->
+  <div class="q-card" id="qc-16">
+    <div class="q-number"><span>প্রশ্ন ১৬</span><span class="q-badge">সামাজিক সহায়তা</span></div>
+    <div class="q-text">বিপদে পড়লে আপনার এলাকায় কে কে আপনাকে সাহায্য করতে আসবে?</div>
+    <p class="multi-hint">প্রযোজ্য সব উত্তর বেছে নিন</p>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="checkbox" name="q16" value="A"> চেয়ারম্যান / মেম্বার</label>
+      <label class="opt-label"><input type="checkbox" name="q16" value="B"> পরিবার (নিকটাত্মীয়)</label>
+      <label class="opt-label"><input type="checkbox" name="q16" value="C"> বন্ধু</label>
+      <label class="opt-label"><input type="checkbox" name="q16" value="D"> প্রতিবেশী</label>
+      <label class="opt-label"><input type="checkbox" name="q16" value="E"> দূরের আত্মীয়</label>
+      <label class="opt-label"><input type="checkbox" name="q16" value="F"> নিয়মিত গ্রাহক</label>
+      <label class="opt-label"><input type="checkbox" name="q16" value="G"> NGO বা সমিতির সদস্য</label>
+      <label class="opt-label"><input type="checkbox" name="q16" value="H"> ধর্মীয় প্রতিষ্ঠান / মসজিদ কমিটি</label>
+      <label class="opt-label"><input type="checkbox" name="q16" value="I"> কেউ আসবে না বলে মনে হয়</label>
+    </div>
+  </div>
+
+  <!-- Q17 -->
+  <div class="q-card" id="qc-17">
+    <div class="q-number"><span>প্রশ্ন ১৭</span><span class="q-badge">সামাজিক সংগঠন</span></div>
+    <div class="q-text">আপনি কোন কোন সামাজিক সংগঠনের সদস্য?</div>
+    <p class="multi-hint">প্রযোজ্য সব উত্তর বেছে নিন</p>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="checkbox" name="q17" value="a"> সঞ্চয় সমিতি / DPS গ্রুপ</label>
+      <label class="opt-label"><input type="checkbox" name="q17" value="b"> মহিলা উন্নয়ন সংগঠন</label>
+      <label class="opt-label"><input type="checkbox" name="q17" value="c"> ক্ষুদ্রঋণ সংস্থার সমিতি (যেমন: গ্রামীণ, ব্র্যাক)</label>
+      <label class="opt-label"><input type="checkbox" name="q17" value="d"> কৃষক সমিতি</label>
+      <label class="opt-label"><input type="checkbox" name="q17" value="e"> যুব বা স্পোর্টস ক্লাব</label>
+      <label class="opt-label"><input type="checkbox" name="q17" value="f"> ব্যবসায়ী সমিতি</label>
+      <label class="opt-label"><input type="checkbox" name="q17" value="g"> ধর্মীয় সংগঠন</label>
+      <label class="opt-label"><input type="checkbox" name="q17" value="h"> রাজনৈতিক সংগঠন</label>
+      <label class="opt-label"><input type="checkbox" name="q17" value="i"> কোনো সংগঠনে নেই</label>
+    </div>
+  </div>
+
+  <!-- Q18 -->
+  <div class="q-card" id="qc-18">
+    <div class="q-number"><span>প্রশ্ন ১৮</span><span class="q-badge">গ্রাহক সম্পর্ক</span></div>
+    <div class="q-text">আপনার ব্যবসার গ্রাহকদের মধ্যে কতজনকে আপনি ৬ মাসের বেশি সময় ধরে চেনেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q18" value="a"> কেউ নেই</label>
+      <label class="opt-label"><input type="radio" name="q18" value="b"> ১ — ৫ জন</label>
+      <label class="opt-label"><input type="radio" name="q18" value="c"> ৬ — ১৫ জন</label>
+      <label class="opt-label"><input type="radio" name="q18" value="d"> ১৬ — ৩০ জন</label>
+      <label class="opt-label"><input type="radio" name="q18" value="e"> ৩০ — ৫০ জন</label>
+      <label class="opt-label"><input type="radio" name="q18" value="f"> ৫০ জনের বেশি</label>
+    </div>
+  </div>
+</div><!-- /sec-3 -->
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 5 — বিপদ কাটানোর শক্তি
+═══════════════════════════════════════════ -->
+<div class="section-block" id="sec-4">
+  <div class="section-header">
+    <div class="sec-icon">🌱</div>
+    <div class="sec-title-wrap">
+      <div class="sec-title">বিপদ কাটানোর শক্তি</div>
+      <div class="sec-desc">বিপদ কাটিয়ে ঘুরে দাঁড়ানোর ক্ষমতা</div>
+    </div>
+  </div>
+
+  <!-- Q20 -->
+  <div class="q-card" id="qc-20">
+    <div class="q-number"><span>প্রশ্ন ১৯</span><span class="q-badge">জরুরি তহবিল</span></div>
+    <div class="q-text">হঠাৎ আপনার বাড়িতে ২০ হাজার টাকার খুব জরুরি দরকার হলে আপনার প্রথম উৎস কোনটি?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q20" value="a"> নিজের সঞ্চয় থেকে</label>
+      <label class="opt-label"><input type="radio" name="q20" value="b"> পরিবারের কাছ থেকে</label>
+      <label class="opt-label"><input type="radio" name="q20" value="c"> বন্ধু বা প্রতিবেশীর কাছ থেকে ধার</label>
+      <label class="opt-label"><input type="radio" name="q20" value="d"> এনজিও বা ক্ষুদ্রঋণ সংস্থা থেকে</label>
+      <label class="opt-label"><input type="radio" name="q20" value="e"> ব্যাংক থেকে ঋণ নেব</label>
+      <label class="opt-label"><input type="radio" name="q20" value="f"> মহাজন বা সুদের ব্যবসায়ী থেকে</label>
+      <label class="opt-label"><input type="radio" name="q20" value="g"> সম্পদ বিক্রি করব (জমি, গহনা ইত্যাদি)</label>
+      <label class="opt-label"><input type="radio" name="q20" value="h"> জানি না / কোনো উপায় নেই</label>
+    </div>
+  </div>
+
+  <!-- Q21 -->
+  <div class="q-card" id="qc-21">
+    <div class="q-number"><span>প্রশ্ন ২০</span><span class="q-badge">বড় ধাক্কা</span></div>
+    <div class="q-text">গত ২ বছরে আপনার ব্যবসা বা আয়ে সবচেয়ে বড় ধাক্কা কী ছিল?</div>
+    <p class="multi-hint">একাধিক উত্তর বেছে নিতে পারেন</p>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="checkbox" name="q21" value="a"> অসুস্থতা (নিজের বা পরিবারের)</label>
+      <label class="opt-label"><input type="checkbox" name="q21" value="b"> প্রাকৃতিক দুর্যোগ (বন্যা, ঝড়, খরা)</label>
+      <label class="opt-label"><input type="checkbox" name="q21" value="c"> বাজারে পণ্যের দাম পড়ে যাওয়া</label>
+      <label class="opt-label"><input type="checkbox" name="q21" value="d"> ব্যবসার প্রতিযোগিতা বেড়ে যাওয়া</label>
+      <label class="opt-label"><input type="checkbox" name="q21" value="e"> পরিবারে মৃত্যু বা দুর্ঘটনা</label>
+      <label class="opt-label"><input type="checkbox" name="q21" value="f"> চুরি বা ডাকাতি</label>
+      <label class="opt-label"><input type="checkbox" name="q21" value="g"> ঋণ পরিশোধের চাপ</label>
+      <label class="opt-label"><input type="checkbox" name="q21" value="h"> COVID-19 বা মহামারীর প্রভাব</label>
+      <label class="opt-label"><input type="checkbox" name="q21" value="i"> কোনো বড় ধাক্কা ছিল না</label>
+    </div>
+  </div>
+
+  <!-- Q22 -->
+  <div class="q-card" id="qc-22">
+    <div class="q-number"><span>প্রশ্ন ২১</span><span class="q-badge">পুনরুদ্ধার</span></div>
+    <div class="q-text">সেই ধাক্কা থেকে আপনি কত দিনে ঘুরে দাঁড়িয়েছেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q22" value="a"> এখনো পুরোপুরি ঘুরে দাঁড়াতে পারিনি</label>
+      <label class="opt-label"><input type="radio" name="q22" value="b"> ৬ মাসের বেশি সময় লেগেছে</label>
+      <label class="opt-label"><input type="radio" name="q22" value="c"> ৩ — ৬ মাস লেগেছে</label>
+      <label class="opt-label"><input type="radio" name="q22" value="d"> ১ — ৩ মাস লেগেছে</label>
+      <label class="opt-label"><input type="radio" name="q22" value="e"> ১ মাসের মধ্যেই ঘুরে দাঁড়িয়েছি</label>
+      <label class="opt-label"><input type="radio" name="q22" value="f"> প্রশ্ন ২০ অনুযায়ী কোনো ধাক্কা ছিল না</label>
+    </div>
+  </div>
+
+  <!-- Q23 -->
+  <div class="q-card" id="qc-23">
+    <div class="q-number"><span>প্রশ্ন ২২</span><span class="q-badge">মনোবল</span></div>
+    <div class="q-text">"কঠিন সময়েও আমি হাল ছাড়ি না" — এর সাথে আপনি কতটুকু একমত?</div>
+    <div class="likert-wrap">
+      <div class="likert-opt"><input type="radio" name="q23" value="1" id="q23_1"><label class="likert-btn" for="q23_1">একদমই না</label></div>
+      <div class="likert-opt"><input type="radio" name="q23" value="2" id="q23_2"><label class="likert-btn" for="q23_2">কখনো কখনো ছেড়ে দিই</label></div>
+      <div class="likert-opt"><input type="radio" name="q23" value="3" id="q23_3"><label class="likert-btn" for="q23_3">পরিস্থিতি বুঝে</label></div>
+      <div class="likert-opt"><input type="radio" name="q23" value="4" id="q23_4"><label class="likert-btn" for="q23_4">সাধারণত চেষ্টা করি</label></div>
+      <div class="likert-opt"><input type="radio" name="q23" value="5" id="q23_5"><label class="likert-btn" for="q23_5">সবসময় চেষ্টা করি</label></div>
+    </div>
+    <div class="likert-labels"><span>একদমই না</span><span>সবসময়</span></div>
+  </div>
+</div><!-- /sec-4 -->
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 6 — আকাঙ্ক্ষা ও লক্ষ্য
+═══════════════════════════════════════════ -->
+<div class="section-block" id="sec-5">
+  <div class="section-header">
+    <div class="sec-icon">🎯</div>
+    <div class="sec-title-wrap">
+      <div class="sec-title">আকাঙ্ক্ষা ও লক্ষ্য</div>
+      <div class="sec-desc">ভবিষ্যৎ পরিকল্পনা ও উদ্যম</div>
+    </div>
+  </div>
+
+  <!-- Q24 -->
+  <div class="q-card" id="qc-24">
+    <div class="q-number"><span>প্রশ্ন ২৩</span><span class="q-badge">ভবিষ্যৎ পরিকল্পনা</span></div>
+    <div class="q-text">৫ বছর পরে আপনি নিজেকে কোথায় দেখেন?</div>
+    <p class="multi-hint">একাধিক উত্তর বেছে নিতে পারেন</p>
+    <div class="options-grid">
+      <label class="opt-label"><input type="checkbox" name="q24" value="a"> এখনকার মতো একই অবস্থায়</label>
+      <label class="opt-label"><input type="checkbox" name="q24" value="b"> বর্তমান ব্যবসা আরও বড় করে</label>
+      <label class="opt-label"><input type="checkbox" name="q24" value="c"> নতুন ব্যবসা শুরু করে</label>
+      <label class="opt-label"><input type="checkbox" name="q24" value="d"> ছেলে-মেয়েদের পড়াশোনা ও ভবিষ্যৎ গুছিয়ে দিয়ে</label>
+      <label class="opt-label"><input type="checkbox" name="q24" value="e"> বাড়ি বা জমি কিনে</label>
+      <label class="opt-label"><input type="checkbox" name="q24" value="f"> ঋণমুক্ত এবং সঞ্চয় নিয়ে</label>
+      <label class="opt-label"><input type="checkbox" name="q24" value="g"> পরিবারের আর্থিক নিরাপত্তা নিশ্চিত করে</label>
+      <label class="opt-label"><input type="checkbox" name="q24" value="h"> ভবিষ্যৎ নিয়ে তেমন ভাবি না</label>
+    </div>
+  </div>
+
+  <!-- Q25 -->
+  <div class="q-card" id="qc-25">
+    <div class="q-number"><span>প্রশ্ন ২৪</span><span class="q-badge">পরিশ্রমের মনোভাব</span></div>
+    <div class="q-text">"আমি পরিবারের জন্য কঠিন পরিশ্রম করতে রাজি" — এর সাথে আপনি কতটুকু একমত?</div>
+    <div class="likert-wrap">
+      <div class="likert-opt"><input type="radio" name="q25" value="1" id="q25_1"><label class="likert-btn" for="q25_1">একদমই না</label></div>
+      <div class="likert-opt"><input type="radio" name="q25" value="2" id="q25_2"><label class="likert-btn" for="q25_2">সীমিতভাবে</label></div>
+      <div class="likert-opt"><input type="radio" name="q25" value="3" id="q25_3"><label class="likert-btn" for="q25_3">মাঝামাঝি</label></div>
+      <div class="likert-opt"><input type="radio" name="q25" value="4" id="q25_4"><label class="likert-btn" for="q25_4">হ্যাঁ, রাজি</label></div>
+      <div class="likert-opt"><input type="radio" name="q25" value="5" id="q25_5"><label class="likert-btn" for="q25_5">সম্পূর্ণ রাজি</label></div>
+    </div>
+  </div>
+
+  <!-- Q26 -->
+  <div class="q-card" id="qc-26">
+    <div class="q-number"><span>প্রশ্ন ২৫</span><span class="q-badge">কর্মঘণ্টা</span></div>
+    <div class="q-text">আপনি সপ্তাহে কত ঘণ্টা ব্যবসা বা কাজে দেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q26" value="a"> ২০ ঘণ্টার কম</label>
+      <label class="opt-label"><input type="radio" name="q26" value="b"> ২০ — ৩৫ ঘণ্টা</label>
+      <label class="opt-label"><input type="radio" name="q26" value="c"> ৩৬ — ৪৮ ঘণ্টা</label>
+      <label class="opt-label"><input type="radio" name="q26" value="d"> ৪৯ — ৬০ ঘণ্টা</label>
+      <label class="opt-label"><input type="radio" name="q26" value="e"> ৬০ — ৭০ ঘণ্টা</label>
+      <label class="opt-label"><input type="radio" name="q26" value="f"> ৭০ ঘণ্টার বেশি (প্রায় সারাদিন)</label>
+    </div>
+  </div>
+
+  <!-- Q27 -->
+  <div class="q-card" id="qc-27">
+    <div class="q-number"><span>প্রশ্ন ২৬</span><span class="q-badge">ব্যবসার ঝুঁকি</span></div>
+    <div class="q-text">আপনার ব্যবসা বন্ধ হয়ে যাওয়ার সম্ভাবনা আছে কি?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q27" value="a"> না, কোনো সম্ভাবনা নেই</label>
+      <label class="opt-label"><input type="radio" name="q27" value="b"> খুব কম সম্ভাবনা</label>
+      <label class="opt-label"><input type="radio" name="q27" value="c"> কিছুটা সম্ভাবনা আছে</label>
+      <label class="opt-label"><input type="radio" name="q27" value="d"> মোটামুটি সম্ভাবনা আছে</label>
+      <label class="opt-label"><input type="radio" name="q27" value="e"> অনেক সম্ভাবনা আছে</label>
+      <label class="opt-label"><input type="radio" name="q27" value="f"> এমনিতেই ব্যবসা বন্ধের মুখে আছি</label>
+    </div>
+  </div>
+
+  <!-- Q28 -->
+  <div class="q-card" id="qc-28">
+    <div class="q-number"><span>প্রশ্ন ২৭</span><span class="q-badge">পরিকল্পনা-খ</span></div>
+    <div class="q-text">ব্যবসা বন্ধ হয়ে গেলে পরবর্তীতে আপনি কী করবেন?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q28" value="a"> অন্য কোনো ব্যবসা শুরু করব</label>
+      <label class="opt-label"><input type="radio" name="q28" value="b"> চাকরি বা মজুরিভিত্তিক কাজ খুঁজব</label>
+      <label class="opt-label"><input type="radio" name="q28" value="c"> কৃষিকাজে ফিরে যাব</label>
+      <label class="opt-label"><input type="radio" name="q28" value="d"> পরিবারের উপর নির্ভর করব</label>
+      <label class="opt-label"><input type="radio" name="q28" value="e"> শহরে বা বিদেশে কাজে যাব</label>
+      <label class="opt-label"><input type="radio" name="q28" value="f"> অন্য কারো ব্যবসায় অংশীদার হব</label>
+      <label class="opt-label"><input type="radio" name="q28" value="g"> এখনো চিন্তা করিনি</label>
+    </div>
+  </div>
+</div><!-- /sec-5 -->
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 7 — সঞ্চয় ও বীমা
+═══════════════════════════════════════════ -->
+<div class="section-block" id="sec-6">
+  <div class="section-header">
+    <div class="sec-icon">🏦</div>
+    <div class="sec-title-wrap">
+      <div class="sec-title">সঞ্চয় ও বীমা</div>
+      <div class="sec-desc">আর্থিক সুরক্ষা ও ভবিষ্যৎ প্রস্তুতি</div>
+    </div>
+  </div>
+
+  <!-- Q29 -->
+  <div class="q-card" id="qc-29">
+    <div class="q-number"><span>প্রশ্ন ২৮</span><span class="q-badge">সঞ্চয়ের উদ্দেশ্য</span></div>
+    <div class="q-text">আপনি কেন সঞ্চয় করেন? সঞ্চয়ের কী কী লাভ বলে আপনি মনে করেন?</div>
+    <p class="multi-hint">একাধিক উত্তর বেছে নিতে পারেন</p>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="checkbox" name="q29" value="a"> জরুরি বিপদের জন্য</label>
+      <label class="opt-label"><input type="checkbox" name="q29" value="b"> সন্তানের পড়াশোনা বা বিয়ের জন্য</label>
+      <label class="opt-label"><input type="checkbox" name="q29" value="c"> ব্যবসার মূলধন বাড়ানোর জন্য</label>
+      <label class="opt-label"><input type="checkbox" name="q29" value="d"> বাড়ি বা সম্পদ কেনার জন্য</label>
+      <label class="opt-label"><input type="checkbox" name="q29" value="e"> বার্ধক্যের নিরাপত্তার জন্য</label>
+      <label class="opt-label"><input type="checkbox" name="q29" value="f"> ঋণমুক্ত হওয়ার জন্য</label>
+      <label class="opt-label"><input type="checkbox" name="q29" value="g"> মনের শান্তির জন্য</label>
+      <label class="opt-label"><input type="checkbox" name="q29" value="h"> সঞ্চয় করার অভ্যাস নেই</label>
+    </div>
+  </div>
+
+  <!-- Q30 -->
+  <div class="q-card" id="qc-30">
+    <div class="q-number"><span>প্রশ্ন ২৯</span><span class="q-badge">সঞ্চয়ের পদ্ধতি</span></div>
+    <div class="q-text">আপনি কী কী উপায়ে সঞ্চয় করেন?</div>
+    <p class="multi-hint">প্রযোজ্য সব উত্তর বেছে নিন</p>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="checkbox" name="q30" value="a"> ব্যাংকে সেভিংস অ্যাকাউন্টে</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="b"> ডিপিএস (DPS)</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="c"> এফডিআর (FDR)</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="d"> NGO / MFI-র সঞ্চয় স্কিমে</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="e"> মোবাইল ব্যাংকিংয়ে (বিকাশ/নগদ ইত্যাদি)</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="f"> সমিতিতে (বাড়িতে বাড়িতে জমা)</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="g"> বাড়িতে নগদ রেখে</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="h"> সোনা-গহনা কিনে</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="i"> জমি বা সম্পদে বিনিয়োগ করে</label>
+      <label class="opt-label"><input type="checkbox" name="q30" value="j"> কোনো সঞ্চয় নেই</label>
+    </div>
+  </div>
+
+  <!-- Q31 -->
+  <div class="q-card" id="qc-31">
+    <div class="q-number"><span>প্রশ্ন ৩০</span><span class="q-badge">বীমা</span></div>
+    <div class="q-text">আপনার কি কোনো ইনস্যুরেন্স (বীমা) আছে?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q31" value="a"> হ্যাঁ, জীবন বীমা আছে</label>
+      <label class="opt-label"><input type="radio" name="q31" value="b"> হ্যাঁ, স্বাস্থ্য বীমা আছে</label>
+      <label class="opt-label"><input type="radio" name="q31" value="c"> হ্যাঁ, ফসল বা ব্যবসার বীমা আছে</label>
+      <label class="opt-label"><input type="radio" name="q31" value="d"> NGO/MFI-র মাধ্যমে কোনো বীমা আছে</label>
+      <label class="opt-label"><input type="radio" name="q31" value="e"> না, কোনো বীমা নেই</label>
+      <label class="opt-label"><input type="radio" name="q31" value="f"> বীমা কী তা জানি না</label>
+    </div>
+  </div>
+</div><!-- /sec-6 -->
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 8 — ঋণ মনোভাব
+═══════════════════════════════════════════ -->
+<div class="section-block" id="sec-7">
+  <div class="section-header">
+    <div class="sec-icon">📋</div>
+    <div class="sec-title-wrap">
+      <div class="sec-title">ঋণ মনোভাব ও পরিশোধ ইচ্ছা</div>
+      <div class="sec-desc">ঋণ সম্পর্কে দৃষ্টিভঙ্গি ও সততা</div>
+    </div>
+  </div>
+
+  <!-- Q19 — moved from বিপদ কাটানোর শক্তি -->
+  <div class="q-card" id="qc-19">
+    <div class="q-number"><span>প্রশ্ন ৩১</span><span class="q-badge">কিস্তি পরিশোধ</span></div>
+    <div class="q-text">গত ৬ মাসে আপনি কয়বার ঋণের কিস্তি সময়মতো দিয়েছেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q19" value="a"> একবারও না</label>
+      <label class="opt-label"><input type="radio" name="q19" value="b"> ১ — ২ বার</label>
+      <label class="opt-label"><input type="radio" name="q19" value="c"> ৩ — ৪ বার</label>
+      <label class="opt-label"><input type="radio" name="q19" value="d"> ৫ বার</label>
+      <label class="opt-label"><input type="radio" name="q19" value="e"> সবসময় সময়মতো (৬/৬ বার)</label>
+      <label class="opt-label"><input type="radio" name="q19" value="f"> এখন পর্যন্ত কোনো ঋণ নেইনি</label>
+    </div>
+  </div>
+
+  <!-- Q32 -->
+  <div class="q-card" id="qc-32">
+    <div class="q-number"><span>প্রশ্ন ৩২</span><span class="q-badge">ঋণের ফলাফল</span></div>
+    <div class="q-text">আপনার মতে যারা ঋণ নেয় তারা সফল হয় নাকি ব্যর্থ হয়?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q32" value="a"> বেশিরভাগ সফল হয়</label>
+      <label class="opt-label"><input type="radio" name="q32" value="b"> বেশিরভাগ ব্যর্থ হয়</label>
+      <label class="opt-label"><input type="radio" name="q32" value="c"> সঠিকভাবে ব্যবহার করলে সফল হয়</label>
+      <label class="opt-label"><input type="radio" name="q32" value="d"> পরিকল্পনা না থাকলে ব্যর্থ হয়</label>
+      <label class="opt-label"><input type="radio" name="q32" value="e"> ব্যক্তির উপর নির্ভর করে</label>
+      <label class="opt-label"><input type="radio" name="q32" value="f"> জানি না</label>
+    </div>
+  </div>
+
+  <!-- Q33 -->
+  <div class="q-card" id="qc-33">
+    <div class="q-number"><span>প্রশ্ন ৩৩</span><span class="q-badge">সাফল্যের কারণ</span></div>
+    <div class="q-text">যারা ঋণ নিয়ে সফল হয়, তারা কেন সফল হয়?</div>
+    <p class="multi-hint">একাধিক উত্তর বেছে নিতে পারেন</p>
+    <div class="options-grid">
+      <label class="opt-label"><input type="checkbox" name="q33" value="a"> সঠিক ব্যবসায় বিনিয়োগ করে</label>
+      <label class="opt-label"><input type="checkbox" name="q33" value="b"> সময়মতো কিস্তি পরিশোধ করে</label>
+      <label class="opt-label"><input type="checkbox" name="q33" value="c"> ঋণের টাকা ব্যবসায় ছাড়া অন্য কাজে খরচ করে না</label>
+      <label class="opt-label"><input type="checkbox" name="q33" value="d"> পরিকল্পনা মেনে চলে</label>
+      <label class="opt-label"><input type="checkbox" name="q33" value="e"> পরিবারের সমর্থন থাকে</label>
+      <label class="opt-label"><input type="checkbox" name="q33" value="f"> পরিশ্রমী ও নিষ্ঠাবান</label>
+      <label class="opt-label"><input type="checkbox" name="q33" value="g"> বাজার ও ব্যবসা সম্পর্কে ভালো জ্ঞান আছে</label>
+      <label class="opt-label"><input type="checkbox" name="q33" value="h"> জানি না</label>
+    </div>
+  </div>
+
+  <!-- Q34 -->
+  <div class="q-card" id="qc-34">
+    <div class="q-number"><span>প্রশ্ন ৩৪</span><span class="q-badge">সফলতার উদাহরণ</span></div>
+    <div class="q-text">ঋণ নিয়ে সফল হয়েছে এমন কতজনকে আপনি চেনেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q34" value="a"> কাউকে চিনি না</label>
+      <label class="opt-label"><input type="radio" name="q34" value="b"> ১ — ২ জন</label>
+      <label class="opt-label"><input type="radio" name="q34" value="c"> ৩ — ৫ জন</label>
+      <label class="opt-label"><input type="radio" name="q34" value="d"> ৬ — ১০ জন</label>
+      <label class="opt-label"><input type="radio" name="q34" value="e"> ১০ জনের বেশি</label>
+    </div>
+  </div>
+
+  <!-- Q35 -->
+  <div class="q-card" id="qc-35">
+    <div class="q-number"><span>প্রশ্ন ৩৫</span><span class="q-badge">ব্যর্থতার কারণ</span></div>
+    <div class="q-text">যারা ঋণ নিয়ে ব্যর্থ হয়, তারা কেন ব্যর্থ হয়?</div>
+    <p class="multi-hint">একাধিক উত্তর বেছে নিতে পারেন</p>
+    <div class="options-grid">
+      <label class="opt-label"><input type="checkbox" name="q35" value="a"> ঋণের টাকা পরিবারের ব্যক্তিগত কাজে খরচ করে</label>
+      <label class="opt-label"><input type="checkbox" name="q35" value="b"> ব্যবসার পরিকল্পনা না করেই ঋণ নেয়</label>
+      <label class="opt-label"><input type="checkbox" name="q35" value="c"> একাধিক জায়গা থেকে বেশি ঋণ নেয়</label>
+      <label class="opt-label"><input type="checkbox" name="q35" value="d"> অসুস্থতা বা পারিবারিক সমস্যায় পড়ে</label>
+      <label class="opt-label"><input type="checkbox" name="q35" value="e"> ব্যবসায় লোকসান হয়</label>
+      <label class="opt-label"><input type="checkbox" name="q35" value="f"> সুদের হার বেশি তাই পরিশোধ করতে পারে না</label>
+      <label class="opt-label"><input type="checkbox" name="q35" value="g"> পরিশ্রম কম করে বা অলস</label>
+      <label class="opt-label"><input type="checkbox" name="q35" value="h"> জানি না</label>
+    </div>
+  </div>
+
+  <!-- Q36 -->
+  <div class="q-card" id="qc-36">
+    <div class="q-number"><span>প্রশ্ন ৩৬</span><span class="q-badge">ব্যর্থতার উদাহরণ</span></div>
+    <div class="q-text">ঋণ নিয়ে ব্যর্থ হয়েছে এমন কতজনকে আপনি চেনেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q36" value="a"> কাউকে চিনি না</label>
+      <label class="opt-label"><input type="radio" name="q36" value="b"> ১ — ২ জন</label>
+      <label class="opt-label"><input type="radio" name="q36" value="c"> ৩ — ৫ জন</label>
+      <label class="opt-label"><input type="radio" name="q36" value="d"> ৬ — ১০ জন</label>
+      <label class="opt-label"><input type="radio" name="q36" value="e"> ১০ জনের বেশি</label>
+    </div>
+  </div>
+
+  <!-- Q37 -->
+  <div class="q-card" id="qc-37">
+    <div class="q-number"><span>প্রশ্ন ৩৭</span><span class="q-badge">ঋণের উৎস</span></div>
+    <div class="q-text">আপনি এখন পর্যন্ত কয়টি জায়গা থেকে ঋণ নিয়েছেন বা নিচ্ছেন?</div>
+    <div class="options-grid two-col">
+      <label class="opt-label"><input type="radio" name="q37" value="a"> কখনো ঋণ নিইনি</label>
+      <label class="opt-label"><input type="radio" name="q37" value="b"> ১টি জায়গা থেকে</label>
+      <label class="opt-label"><input type="radio" name="q37" value="c"> ২টি জায়গা থেকে</label>
+      <label class="opt-label"><input type="radio" name="q37" value="d"> ৩টি জায়গা থেকে</label>
+      <label class="opt-label"><input type="radio" name="q37" value="e"> ৪ বা তার বেশি জায়গা থেকে</label>
+    </div>
+  </div>
+
+  <!-- Q38 -->
+  <div class="q-card" id="qc-38">
+    <div class="q-number"><span>প্রশ্ন ৩৮</span><span class="q-badge">ঋণের লক্ষ্য</span></div>
+    <div class="q-text">ঋণ নিয়ে আপনার প্রথম লক্ষ্য কী?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q38" value="a"> ব্যবসার মূলধন বাড়ানো</label>
+      <label class="opt-label"><input type="radio" name="q38" value="b"> নতুন ব্যবসা শুরু করা</label>
+      <label class="opt-label"><input type="radio" name="q38" value="c"> বিদ্যমান ব্যবসার সরঞ্জাম বা মালামাল কেনা</label>
+      <label class="opt-label"><input type="radio" name="q38" value="d"> সন্তানের পড়াশোনার খরচ মেটানো</label>
+      <label class="opt-label"><input type="radio" name="q38" value="e"> বাড়ি মেরামত বা নির্মাণ করা</label>
+      <label class="opt-label"><input type="radio" name="q38" value="f"> পুরনো ঋণ পরিশোধ করা</label>
+      <label class="opt-label"><input type="radio" name="q38" value="g"> পারিবারিক জরুরি প্রয়োজন মেটানো (চিকিৎসা, বিয়ে ইত্যাদি)</label>
+      <label class="opt-label"><input type="radio" name="q38" value="h"> কৃষি বা গবাদিপশু খাতে বিনিয়োগ</label>
+      <label class="opt-label"><input type="radio" name="q38" value="i"> আয় বাড়িয়ে পরিবারের জীবনমান উন্নত করা</label>
+      <label class="opt-label"><input type="radio" name="q38" value="j"> এখনো নির্দিষ্ট করিনি</label>
+    </div>
+  </div>
+
+  <!-- Q40 — repayment failure -->
+  <div class="q-card" id="qc-40">
+    <div class="q-number"><span>প্রশ্ন ৩৯</span><span class="q-badge">পরিশোধ ইচ্ছা</span></div>
+    <div class="q-text">আপনি ঋণ পরিশোধ করতে ব্যর্থ হলে কী করবেন?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q40" value="a"> সংস্থার সাথে কথা বলে সমাধান খুঁজব</label>
+      <label class="opt-label"><input type="radio" name="q40" value="b"> কিস্তি পুনর্বিন্যাসের আবেদন করব</label>
+      <label class="opt-label"><input type="radio" name="q40" value="c"> পরিবারের সাহায্য নেব</label>
+      <label class="opt-label"><input type="radio" name="q40" value="d"> অন্য উৎস থেকে টাকা জোগাড় করব</label>
+      <label class="opt-label"><input type="radio" name="q40" value="e"> সম্পদ বিক্রি করে পরিশোধ করব</label>
+      <label class="opt-label"><input type="radio" name="q40" value="f"> লুকিয়ে থাকব বা পালিয়ে যাব</label>
+      <label class="opt-label"><input type="radio" name="q40" value="g"> জানি না, এখনো ভাবিনি</label>
+    </div>
+  </div>
+
+  <!-- Q39 — honesty check (LAST) -->
+  <div class="q-card" id="qc-39">
+    <div class="q-number"><span>প্রশ্ন ৪০</span><span class="q-badge">সততা যাচাই</span></div>
+    <div class="q-text">আপনি কি বুঝে-শুনে নিজের মতো করে সব প্রশ্নের সত্য উত্তর দিয়েছেন, নাকি আমাদের খুশি করার জন্য উত্তর দিয়েছেন?</div>
+    <div class="options-grid">
+      <label class="opt-label"><input type="radio" name="q39" value="a"> সম্পূর্ণ সত্য ও নিজের মতামত অনুযায়ী উত্তর দিয়েছি</label>
+      <label class="opt-label"><input type="radio" name="q39" value="b"> বেশিরভাগ সত্য বলেছি, কিছুটা চাপ অনুভব করেছি</label>
+      <label class="opt-label"><input type="radio" name="q39" value="c"> কোনো কোনো প্রশ্নে সত্যি বলতে লজ্জা লেগেছে</label>
+      <label class="opt-label"><input type="radio" name="q39" value="d"> কিছু প্রশ্ন বুঝিনি তাই যেকোনো উত্তর দিয়েছি</label>
+    </div>
+  </div>
+
+</div><!-- /sec-7 -->
+
+<!-- Submit screen -->
+<div class="submit-screen" id="submitScreen">
+  <div class="check-circle">✓</div>
+  <h2 style="font-family:'Noto Serif Bengali',serif;font-size:22px;color:var(--primary-dark);margin-bottom:10px">সম্পন্ন হয়েছে!</h2>
+  <p style="color:var(--text-muted);font-size:14.5px;margin-bottom:24px">আপনার সম্ভাব্য সদস্য প্রোফাইল সংরক্ষিত হয়েছে।<br>সঠিক ও সৎ উত্তর দেওয়ার জন্য ধন্যবাদ।</p>
+  <button class="btn btn-outline" onclick="resetForm()">আবার শুরু করুন</button>
+</div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottomNav">
+  <button class="btn btn-outline" id="btnPrev" onclick="navigate(-1)" disabled>← পেছনে</button>
+  <div class="nav-center">
+    <span id="secLabel">বিভাগ ১ / ৮</span>
+  </div>
+  <button class="btn btn-primary" id="btnNext" onclick="navigate(1)">পরবর্তী →</button>
+</div>
+
+<script>
+const TOTAL_SECTIONS = 8;
+const SECTION_Q_COUNTS = [7, 5, 3, 3, 5, 5, 3, 9]; // questions per section
+let currentSection = 0;
+let answered = {};
+
+// Count total questions answered
+function countAnswered() {
+  let count = 0;
+  document.querySelectorAll('.q-card').forEach(card => {
+    const id = card.id.replace('qc-','');
+    if (isAnswered(parseInt(id))) count++;
+  });
+  return count;
+}
+
+function isAnswered(qNum) {
+  const card = document.getElementById('qc-' + qNum);
+  if (!card) return false;
+  const radios = card.querySelectorAll('input[type="radio"]:checked');
+  const checks = card.querySelectorAll('input[type="checkbox"]:checked');
+  // Special case for q12 (two sub-groups)
+  if (qNum === 12) {
+    const c = card.querySelectorAll('input[name="q12_capital"]:checked').length;
+    const r = card.querySelectorAll('input[name="q12_revenue"]:checked').length;
+    return c > 0 && r > 0;
+  }
+  return radios.length > 0 || checks.length > 0;
+}
+
+function updateProgress() {
+  const answered = countAnswered();
+  const total = 40;
+  const pct = Math.round((answered / total) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `অগ্রগতি: ${pct}%`;
+  document.getElementById('prog-count').textContent = `প্রশ্ন ${answered} / ৪০`;
+}
+
+function updateCards() {
+  let qNum = 1;
+  document.querySelectorAll('.q-card').forEach(card => {
+    const id = parseInt(card.id.replace('qc-',''));
+    if (isAnswered(id)) {
+      card.classList.add('answered');
+    } else {
+      card.classList.remove('answered');
+    }
+  });
+}
+
+// Navigate sections
+function navigate(dir) {
+  const newSec = currentSection + dir;
+  if (newSec < 0 || newSec >= TOTAL_SECTIONS) return;
+  showSection(newSec);
+}
+
+function showSection(idx) {
+  document.querySelectorAll('.section-block').forEach((b,i) => {
+    b.classList.toggle('active', i === idx);
+  });
+  document.querySelectorAll('.sec-tab').forEach((t,i) => {
+    t.classList.toggle('active', i === idx);
+  });
+  currentSection = idx;
+
+  document.getElementById('btnPrev').disabled = idx === 0;
+  
+  const isLast = idx === TOTAL_SECTIONS - 1;
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = isLast ? 'জমা দিন ✓' : 'পরবর্তী →';
+  btnNext.onclick = isLast ? submitForm : () => navigate(1);
+
+  document.getElementById('secLabel').textContent = `বিভাগ ${idx+1} / ${TOTAL_SECTIONS}`;
+
+  // Scroll to top
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function submitForm() {
+  document.querySelector('.main').querySelectorAll('.section-block').forEach(b => b.style.display = 'none');
+  document.getElementById('submitScreen').style.display = 'block';
+  document.getElementById('bottomNav').style.display = 'none';
+  document.getElementById('secNav').style.display = 'none';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function resetForm() {
+  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('answered'));
+  document.getElementById('submitScreen').style.display = 'none';
+  document.getElementById('bottomNav').style.display = 'flex';
+  document.getElementById('secNav').style.display = 'flex';
+  document.querySelectorAll('.section-block').forEach(b => b.style.display = '');
+  currentSection = 0;
+  showSection(0);
+  updateProgress();
+}
+
+// Attach change listeners
+document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(inp => {
+  inp.addEventListener('change', () => {
+    updateCards();
+    updateProgress();
+    // Update section tab completion
+    updateSectionTabs();
+  });
+});
+
+function updateSectionTabs() {
+  // Section question ranges (1-indexed)
+  const ranges = [
+    [1,7],[8,12],[13,15],[16,18],[20,23],[24,28],[29,31],[19,32,33,34,35,36,37,38,39,40,41]
+  ];
+  document.querySelectorAll('.sec-tab').forEach((tab, i) => {
+    const range = ranges[i];
+    let allAnswered = true;
+    // Support both [from, to] shorthand and explicit [q1, q2, ...] arrays
+    const questions = (range.length === 2 && range[1] - range[0] < 20)
+      ? Array.from({length: range[1] - range[0] + 1}, (_, k) => range[0] + k)
+      : range;
+    for (const q of questions) {
+      if (!isAnswered(q)) { allAnswered = false; break; }
+    }
+    tab.classList.toggle('complete', allAnswered);
+  });
+}
+
+// Tab click
+document.querySelectorAll('.sec-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    showSection(parseInt(tab.dataset.sec));
+  });
+});
+
+// Init
+updateProgress();
+</script>
+</body>
+</html>

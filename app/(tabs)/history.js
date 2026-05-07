@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { T } from '../../constants/tokens';
-import { PERSONAS } from '../../data/personas';
+import { PERSONAS, applicantDisplayFallback } from '../../data/personas';
 import { useApp } from '../../context/AppContext';
 import BrandHeader from '../../components/BrandHeader';
 import Chip from '../../components/Chip';
@@ -97,7 +97,7 @@ export default function HistoryScreen() {
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80 }}>
         {visible.map((r, i) => {
-          const p = PERSONAS[r.id];
+          const p = PERSONAS[r.id] || applicantDisplayFallback(r.id);
           const color = colorForRating(r.rating);
           return (
             <Pressable

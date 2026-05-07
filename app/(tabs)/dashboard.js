@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { T } from '../../constants/tokens';
 import { useApp } from '../../context/AppContext';
+import { PERSONAS } from '../../data/personas';
 import BilingualLabel from '../../components/BilingualLabel';
 import ApplicantRow from '../../components/ApplicantRow';
 import FreyaButton from '../../components/FreyaButton';
@@ -13,7 +14,7 @@ import { bn as toBn } from '../../utils/format';
 
 const APPLICANTS = [
   { id: 'nasrin', status: 'completed', score: 742, rating: 'B', flags: 1, whenEn: 'Today · 2:14 PM' },
-  { id: 'rafiq', status: 'in-progress', step: 14, total: 25, whenEn: 'Today · 11:20 AM' },
+  { id: 'rafiq', status: 'in-progress', step: 14, total: 41, whenEn: 'Today · 11:20 AM' },
   { id: 'shima', status: 'completed', score: 821, rating: 'A', flags: 0, whenEn: 'Yesterday · 3:45 PM' },
 ];
 
@@ -66,7 +67,9 @@ const MODULES = [
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { setApplicant, tweaks, setTweaks, pendingSync, decisions } = useApp();
+  const { setApplicant, tweaks, setTweaks, pendingSync, decisions, applicant, applicantId } = useApp();
+
+  const activeName = applicant?.name?.trim() || applicant?.nameEn?.trim() || applicantId;
 
   const stats = useMemo(() => {
     const todayStr = new Date().toDateString();
@@ -153,6 +156,24 @@ export default function DashboardScreen() {
             style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, backgroundColor: T.teal }}>
             <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>শুরু →</Text>
           </Pressable>
+        </View>
+
+        <View style={{
+          marginHorizontal: 16, marginTop: 10,
+          paddingVertical: 10, paddingHorizontal: 12,
+          backgroundColor: T.cream2,
+          borderRadius: 12,
+          borderWidth: 1, borderColor: T.border,
+        }}>
+          <Text style={{ fontFamily: T.fMonoBold, fontSize: 8, color: T.ink4, letterSpacing: 0.6, marginBottom: 4 }}>
+            ACTIVE APPLICANT
+          </Text>
+          <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.ink }} numberOfLines={2}>
+            {activeName}
+          </Text>
+          <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink3, marginTop: 2 }} numberOfLines={1}>
+            {applicantId}{!PERSONAS[applicantId] ? ' · custom' : ''}
+          </Text>
         </View>
 
         {/* Recent applicants */}

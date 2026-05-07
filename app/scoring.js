@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
 import { T } from '../constants/tokens';
-import { PERSONAS } from '../data/personas';
 import { useApp } from '../context/AppContext';
 import FreyaOrb from '../components/FreyaOrb';
 
@@ -33,9 +32,8 @@ function BlinkDot() {
 
 export default function ScoringScreen() {
   const router = useRouter();
-  const { applicantId } = useApp();
+  const { applicant } = useApp();
   const [step, setStep] = useState(0);
-  const persona = PERSONAS[applicantId] || PERSONAS.nasrin;
 
   useEffect(() => {
     if (step >= MESSAGES.length) {
@@ -63,7 +61,7 @@ export default function ScoringScreen() {
           fontFamily: T.fBnBlack, fontSize: 22, color: '#fff',
           textAlign: 'center', marginBottom: 30, lineHeight: 30,
         }}>
-          {persona.name}-এর{'\n'}প্রোফাইল একটু দেখে নিচ্ছি…
+          {applicant.name}-এর{'\n'}প্রোফাইল একটু দেখে নিচ্ছি…
         </Text>
         <View style={{ width: 280 }}>
           {MESSAGES.map((m, i) => {

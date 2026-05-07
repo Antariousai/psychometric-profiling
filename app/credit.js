@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../constants/tokens';
-import { PERSONAS } from '../data/personas';
 import { useApp } from '../context/AppContext';
 import BrandHeader from '../components/BrandHeader';
 import BilingualLabel from '../components/BilingualLabel';
@@ -73,8 +72,7 @@ const TIMELINE = [
 
 export default function CreditScreen() {
   const router = useRouter();
-  const { applicantId } = useApp();
-  const persona = PERSONAS[applicantId || 'nasrin'];
+  const { applicant } = useApp();
   const [activeSource, setActiveSource] = useState(null);
 
   const hybridScore = Math.round(
@@ -103,13 +101,13 @@ export default function CreditScreen() {
           }}>
             <View style={{
               width: 38, height: 38, borderRadius: 12,
-              backgroundColor: persona.tint + '33',
+              backgroundColor: applicant.tint + '33',
               alignItems: 'center', justifyContent: 'center',
             }}>
-              <Text style={{ fontFamily: T.fBnBlack, fontSize: 16, color: '#fff' }}>{persona.avatar}</Text>
+              <Text style={{ fontFamily: T.fBnBlack, fontSize: 16, color: '#fff' }}>{applicant.avatar}</Text>
             </View>
             <View>
-              <Text style={{ fontFamily: T.fBnBold, fontSize: 14, color: '#fff' }}>{persona.name}</Text>
+              <Text style={{ fontFamily: T.fBnBold, fontSize: 14, color: '#fff' }}>{applicant.name}</Text>
               <Text style={{ fontFamily: T.fMono, fontSize: 9, color: 'rgba(255,255,255,0.5)', letterSpacing: 0.5 }}>
                 হাইব্রিড ক্রেডিট প্রোফাইল · {DATA_SOURCES.length} উৎস
               </Text>

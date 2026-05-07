@@ -1,5 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { load, save, clearAll, K } from '../utils/storage';
+import { DIMENSIONS as DEFAULT_DIMENSIONS } from '../data/dimensions';
+import { PERSONAS, BLANK_APPLICANT, coerceApplicantProfile } from '../data/personas';
+import { isSupabaseConfigured } from '../lib/supabase';
+import { fetchPsychometricDimensions, fetchApplicantProfileBySlug } from '../services/psympSupabase';
 
 const AppCtx = createContext(null);
 
@@ -14,6 +18,13 @@ export function AppProvider({ children }) {
   const [hydrated, setHydrated] = useState(false);
   const [profilePhoto, setProfilePhotoState] = useState(null);
   const [decisions, setDecisionsState] = useState([]);
+  const [assessmentSessionId, setAssessmentSessionIdState] = useState(null);
+  const [assessmentApplicantUuid, setAssessmentApplicantUuidState] = useState(null);
+  const [assessmentQuestions, setAssessmentQuestionsState] = useState(null);
+  const [dimensions, setDimensionsState] = useState(DEFAULT_DIMENSIONS);
+  const [remoteApplicant, setRemoteApplicant] = useState(null);
+  const [applicantDraft, setApplicantDraft] = useState(null);
+  const applicantIdRef = useRef(applicantId);
 
   useEffect(() => {
     (async () => {
@@ -32,6 +43,68 @@ export function AppProvider({ children }) {
       setHydrated(true);
     })();
   }, []);
+
+  useEffect(() => {
+    if (applicantIdRef.current !== applicantId) {
+      applicantIdRef.current = applicantId;
+      setApplicantDraft(null);
+    }
+  }, [applicantId]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    (async () => {
+      if (!isSupabaseConfigured) return;
+      try {
+        const d = await fetchPsychometricDimensions();
+        if (Array.isArray(d) && d.length > 0) setDimensionsState(d);
+      } catch (e) {
+        console.warn('[App] dimensions fetch', e?.message || e);
+      }
+    })();
+  }, [hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!isSupabaseConfigured) {
+      setRemoteApplicant(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const row = await fetchApplicantProfileBySlug(applicantId);
+        if (cancelled) return;
+        if (row?.profile && typeof row.profile === 'object') {
+          setRemoteApplicant({ slug: row.slug ?? applicantId, profile: row.profile });
+        } else {
+          setRemoteApplicant(null);
+        }
+      } catch (e) {
+        if (!cancelled) setRemoteApplicant(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [hydrated, applicantId]);
+
+  const rawApplicant = useMemo(() => {
+    const bundled = PERSONAS[applicantId]
+      ? { ...PERSONAS[applicantId] }
+      : { ...BLANK_APPLICANT, id: applicantId };
+    let base = { ...bundled };
+    if (remoteApplicant?.slug === applicantId && remoteApplicant.profile) {
+      base = { ...base, ...remoteApplicant.profile };
+    }
+    if (applicantDraft && typeof applicantDraft === 'object') {
+      base = { ...base, ...applicantDraft };
+    }
+    return base;
+  }, [applicantId, remoteApplicant, applicantDraft]);
+
+  const applicant = useMemo(
+    () => coerceApplicantProfile(rawApplicant),
+    [rawApplicant],
+  );
 
   const setApplicant = (id) => { setApplicantIdState(id); save(K.applicant, id); };
   const setAnswers = (next) => {
@@ -64,6 +137,11 @@ export function AppProvider({ children }) {
     setApplicantIdState('nasrin');
     setAnswersState({});
     setTweaksState(DEFAULT_TWEAKS);
+    setAssessmentSessionIdState(null);
+    setAssessmentApplicantUuidState(null);
+    setAssessmentQuestionsState(null);
+    setRemoteApplicant(null);
+    setApplicantDraft(null);
   };
 
   const pendingSync = tweaks.offline && Object.keys(answers).length > 0
@@ -71,7 +149,8 @@ export function AppProvider({ children }) {
     : 0;
 
   const value = {
-    applicantId, setApplicant,
+    applicantId, applicant, setApplicant,
+    applicantDraft, setApplicantDraft,
     answers, setAnswers,
     tweaks, setTweaks,
     showFreya, openFreya, closeFreya,
@@ -79,6 +158,13 @@ export function AppProvider({ children }) {
     pendingSync, hydrated, resetAll,
     profilePhoto, setProfilePhoto,
     decisions, addDecision,
+    assessmentSessionId,
+    setAssessmentSessionId: setAssessmentSessionIdState,
+    assessmentApplicantUuid,
+    setAssessmentApplicantUuid: setAssessmentApplicantUuidState,
+    assessmentQuestions,
+    setAssessmentQuestions: setAssessmentQuestionsState,
+    dimensions,
   };
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
