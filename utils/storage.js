@@ -7,6 +7,10 @@ export const K = {
   screen: 'ant.screen',
   profilePhoto: 'ant.profilePhoto',
   decisions: 'ant.decisions',
+  /** Last applicant id for whom in-progress answers belong (resume / start-fresh UX). */
+  assessmentDraftApplicant: 'ant.assessmentDraftApplicant',
+  /** Set after first-run coach marks dismissed. */
+  onboardingSeen: 'ant.onboardingSeen',
 };
 
 export async function load(key, fallback) {

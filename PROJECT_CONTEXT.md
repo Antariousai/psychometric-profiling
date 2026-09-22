@@ -120,6 +120,12 @@ withNativeWind(config, { input: './global.css' })
 
 ---
 
+## Production / Supabase rollout
+
+See **`PRODUCTION_SETUP.md`** for migration `003`, RLS, **`finalize-assessment`** Edge deploy, OAuth/OTP checklist, and UI/UX backlog ideas.
+
+---
+
 ## Critical Known Issues
 
 ### 1. Always use `--legacy-peer-deps`

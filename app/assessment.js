@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Pressable, Platform, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View, Text, ScrollView, Pressable, Platform, ActivityIndicator, Modal, Alert,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { T } from '../constants/tokens';
 import { QUESTIONS } from '../data/questions';
@@ -10,7 +13,9 @@ import BrandHeader from '../components/BrandHeader';
 import Chip from '../components/Chip';
 import FreyaButton from '../components/FreyaButton';
 import FreyaHint from '../components/FreyaHint';
+import { SyncQueueBanner } from '../components/Banners';
 import { bn as toBn } from '../utils/format';
+import { load, save, K } from '../utils/storage';
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
   fetchPsychometricQuestions,
@@ -19,6 +24,8 @@ import {
   completeAssessmentSession,
   saveAssessmentResponsesBatch,
 } from '../services/psympSupabase';
+
+const AVG_MINUTES_PER_QUESTION = 0.35;
 
 function speakText(text) {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
@@ -40,6 +47,7 @@ function OptionList({ q, answered, onAnswer }) {
             key={i}
             onPress={() => onAnswer(i)}
             style={{
+              minHeight: 48,
               paddingVertical: 14, paddingHorizontal: 16,
               backgroundColor: sel ? T.tealBg : '#fff',
               borderWidth: sel ? 2 : 1.5,
@@ -139,6 +147,7 @@ function ScaleInput({ q, answered, onAnswer }) {
 
 export default function AssessmentScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const {
     answers: persistedAnswers,
     setAnswers,
@@ -149,6 +158,8 @@ export default function AssessmentScreen() {
     setAssessmentApplicantUuid,
     setAssessmentQuestions,
     dimensions,
+    pendingSync,
+    flushSyncAndRefresh,
   } = useApp();
   const [questions, setQuestions] = useState(QUESTIONS);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
@@ -156,10 +167,19 @@ export default function AssessmentScreen() {
   const [idx, setIdx] = useState(0);
   const [localAnswers, setLocalAnswers] = useState(persistedAnswers || {});
   const [freya, setFreya] = useState(false);
+  const [resetSessionKey, setResetSessionKey] = useState(0);
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const justSavedTimer = useRef(null);
   const startAt = useRef(Date.now());
   const firstRender = useRef(true);
-  /** Per-question rows FK to psychometric_questions — only sync when those IDs exist in Supabase. */
   const canPersistAnswersToDb = useRef(false);
+  const resumeDismissed = useRef(false);
+
+  useEffect(() => {
+    resumeDismissed.current = false;
+  }, [applicantId, resetSessionKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -212,13 +232,83 @@ export default function AssessmentScreen() {
       setLoadingQuestions(false);
     })();
     return () => { cancelled = true; };
-  }, [applicantId, setAssessmentQuestions, setAssessmentSessionId, setAssessmentApplicantUuid]);
+  }, [applicantId, resetSessionKey, setAssessmentQuestions, setAssessmentSessionId, setAssessmentApplicantUuid]);
 
   useEffect(() => { startAt.current = Date.now(); }, [idx]);
   useEffect(() => {
     if (firstRender.current) { firstRender.current = false; return; }
     setAnswers(localAnswers);
-  }, [localAnswers]);
+  }, [localAnswers, setAnswers]);
+
+  const answeredInBank = useCallback((list, ans) => {
+    if (!list.length) return 0;
+    return list.filter(qq => ans[qq.id]).length;
+  }, []);
+
+  useEffect(() => {
+    if (loadingQuestions || !questions.length) return;
+    let cancelled = false;
+    (async () => {
+      if (resumeDismissed.current) return;
+      const draft = await load(K.assessmentDraftApplicant, null);
+      const n = answeredInBank(questions, localAnswers);
+      if (cancelled) return;
+      if (draft !== applicantId || n === 0 || n >= questions.length) return;
+      setResumeOpen(true);
+    })();
+    return () => { cancelled = true; };
+    // Omit localAnswers from deps — only run when bank/session is ready; avoids opening modal after first answer in a new run.
+  }, [loadingQuestions, questions, applicantId, resetSessionKey, answeredInBank]);
+
+  const estMinutesLeft = Math.max(0, Math.round((questions.length - answeredCount) * AVG_MINUTES_PER_QUESTION));
+
+  const incompleteLeave = questions.length > 0 && answeredInBank(questions, localAnswers) < questions.length
+    && Object.keys(localAnswers).length > 0;
+
+  useEffect(() => {
+    const sub = navigation.addListener('beforeRemove', (e) => {
+      if (!incompleteLeave) return;
+      e.preventDefault();
+      Alert.alert(
+        'মূল্যায়ন থেকে বের হবেন?',
+        'উত্তরগুলো ডিভাইসে সংরক্ষিত আছে — পরে একই আবেদনকারীর জন্য চালিয়ে যেতে পারবেন।',
+        [
+          { text: 'থাকুন', style: 'cancel' },
+          {
+            text: 'বের হোন',
+            style: 'destructive',
+            onPress: () => navigation.dispatch(e.data.action),
+          },
+        ],
+      );
+    });
+    return sub;
+  }, [navigation, incompleteLeave]);
+
+  const requestBack = () => {
+    if (idx > 0) {
+      setIdx(idx - 1);
+      return;
+    }
+    if (!incompleteLeave) {
+      router.back();
+      return;
+    }
+    Alert.alert(
+      'মূল্যায়ন বন্ধ করবেন?',
+      'উত্তর সংরক্ষিত আছে। পরে চালিয়ে যেতে পারবেন।',
+      [
+        { text: 'থাকুন', style: 'cancel' },
+        { text: 'বের হোন', style: 'destructive', onPress: () => router.back() },
+      ],
+    );
+  };
+
+  const flashSaved = () => {
+    if (justSavedTimer.current) clearTimeout(justSavedTimer.current);
+    setJustSaved(true);
+    justSavedTimer.current = setTimeout(() => setJustSaved(false), 1600);
+  };
 
   const q = questions[idx];
   const dim = q ? dimensions.find(d => d.id === q.dim) : null;
@@ -239,10 +329,29 @@ export default function AssessmentScreen() {
     );
   }
 
+  const continuePartial = () => {
+    resumeDismissed.current = true;
+    setResumeOpen(false);
+    const firstMissing = questions.findIndex(qq => !localAnswers[qq.id]);
+    if (firstMissing >= 0) setIdx(firstMissing);
+  };
+
+  const startFresh = () => {
+    resumeDismissed.current = true;
+    setResumeOpen(false);
+    setLocalAnswers({});
+    setAnswers({});
+    void save(K.assessmentDraftApplicant, applicantId);
+    setResetSessionKey(k => k + 1);
+    setIdx(0);
+  };
+
   const answer = (value) => {
     const ms = Date.now() - startAt.current;
     const next = { ...localAnswers, [q.id]: { value, ms } };
     setLocalAnswers(next);
+    void save(K.assessmentDraftApplicant, applicantId);
+    flashSaved();
     if (assessmentSessionId && canPersistAnswersToDb.current) {
       void saveAssessmentResponse(assessmentSessionId, q.id, value, ms);
     }
@@ -284,16 +393,33 @@ export default function AssessmentScreen() {
     router.replace('/scoring');
   };
 
+  const onSyncPress = async () => {
+    setSyncing(true);
+    try {
+      await flushSyncAndRefresh();
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: T.cream }}>
       <StatusBar style="dark" />
+      {isSupabaseConfigured && pendingSync > 0 ? (
+        <SyncQueueBanner
+          pendingSync={pendingSync}
+          onSyncPress={onSyncPress}
+          syncing={syncing}
+        />
+      ) : null}
+
       <BrandHeader
         title={{
           bn: `প্রশ্ন ${toBn(idx + 1)} / ${toBn(questions.length)}`,
           en: `Question ${idx + 1} of ${questions.length}`,
         }}
         subtitle={`${dim.en.toUpperCase()} · ${dim.icon}`}
-        onBack={() => (idx > 0 ? setIdx(idx - 1) : router.back())}
+        onBack={requestBack}
       />
 
       <View style={{ paddingHorizontal: 16, paddingTop: 10, backgroundColor: '#fff' }}>
@@ -319,13 +445,29 @@ export default function AssessmentScreen() {
           alignItems: 'center', paddingVertical: 12, gap: 12,
         }}>
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             style={{ fontFamily: T.fBnBold, fontSize: 11, color: dim.color, flex: 1 }}>
             {dim.bn}
           </Text>
-          <Text style={{ fontFamily: T.fMonoBold, fontSize: 10, color: T.ink3 }}>
-            {toBn(Math.round(progress * 100))}%
+          <View style={{ alignItems: 'flex-end', gap: 4 }}>
+            <Text style={{ fontFamily: T.fMonoBold, fontSize: 10, color: T.ink3 }}>
+              {toBn(Math.round(progress * 100))}%
+            </Text>
+            <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4 }}>
+              ~{toBn(estMinutesLeft)} মিন বাকি
+            </Text>
+          </View>
+        </View>
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+          paddingBottom: 10,
+        }}>
+          <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4 }}>
+            উত্তর {toBn(answeredCount)}/{toBn(questions.length)} · Saved on device
           </Text>
+          {justSaved ? (
+            <Chip color={T.teal} size={8}>✓ সংরক্ষিত</Chip>
+          ) : null}
         </View>
       </View>
 
@@ -362,6 +504,7 @@ export default function AssessmentScreen() {
           <Pressable
             onPress={() => speakText(q.bn)}
             style={({ pressed }) => ({
+              minHeight: 44,
               paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
               borderWidth: 1, borderColor: T.border2,
               backgroundColor: pressed ? T.cream2 : '#fff',
@@ -394,7 +537,7 @@ export default function AssessmentScreen() {
             }
           }}
           style={{
-            flex: 1, paddingVertical: 11, borderRadius: 10,
+            flex: 1, minHeight: 48, paddingVertical: 11, borderRadius: 10,
             borderWidth: 1, borderColor: T.border2,
             backgroundColor: '#fff',
             alignItems: 'center', justifyContent: 'center',
@@ -404,7 +547,7 @@ export default function AssessmentScreen() {
         <Pressable
           onPress={autoFill}
           style={{
-            flex: 2, paddingVertical: 11, borderRadius: 10,
+            flex: 2, minHeight: 48, paddingVertical: 11, borderRadius: 10,
             backgroundColor: T.gold,
             alignItems: 'center', justifyContent: 'center',
           }}>
@@ -416,6 +559,46 @@ export default function AssessmentScreen() {
 
       <FreyaButton onPress={() => setFreya(v => !v)} />
       {freya ? <FreyaHint q={q} onClose={() => setFreya(false)} /> : null}
+
+      <Modal visible={resumeOpen} transparent animationType="fade" onRequestClose={() => setResumeOpen(false)}>
+        <View style={{
+          flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+          justifyContent: 'center', paddingHorizontal: 22,
+        }}>
+          <View style={{
+            backgroundColor: '#fff', borderRadius: 18, padding: 22,
+            borderWidth: 1, borderColor: T.border,
+          }}>
+            <Text style={{ fontFamily: T.fBnBlack, fontSize: 17, color: T.navy, marginBottom: 8 }}>
+              আগের মূল্যায়ন চালিয়ে যাবেন?
+            </Text>
+            <Text style={{ fontFamily: T.fBn, fontSize: 13, color: T.ink2, lineHeight: 21, marginBottom: 8 }}>
+              এই আবেদনকারীর জন্য {toBn(answeredCount)}টি উত্তর আগেই সংরক্ষিত আছে।
+            </Text>
+            <Text style={{ fontFamily: T.fBody, fontSize: 11, color: T.ink4, fontStyle: 'italic', marginBottom: 20 }}>
+              Continue saved session or start fresh (clears answers on this device).
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Pressable
+                onPress={startFresh}
+                style={{
+                  flex: 1, minHeight: 48, paddingVertical: 12, borderRadius: 12,
+                  borderWidth: 1.5, borderColor: T.border, alignItems: 'center', justifyContent: 'center',
+                }}>
+                <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.ink2 }}>নতুন করে</Text>
+              </Pressable>
+              <Pressable
+                onPress={continuePartial}
+                style={{
+                  flex: 1.2, minHeight: 48, paddingVertical: 12, borderRadius: 12,
+                  backgroundColor: T.teal, alignItems: 'center', justifyContent: 'center',
+                }}>
+                <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>চালিয়ে যান</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation,
@@ -32,6 +32,42 @@ export function OfflineBanner({ pendingSync }) {
         fontFamily: T.fMonoBold, fontSize: 9, color: '#fff',
         letterSpacing: 1,
       }}>WILL SYNC WHEN ONLINE</Text>
+    </LinearGradient>
+  );
+}
+
+export function SyncQueueBanner({ pendingSync, onSyncPress, syncing }) {
+  if (!pendingSync) return null;
+  return (
+    <LinearGradient
+      colors={[T.teal, '#0D9488']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={{
+        paddingVertical: 8, paddingHorizontal: 14,
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+      }}>
+      <Text style={{ fontFamily: T.fBnBold, fontSize: 12, color: '#fff' }}>
+        সিঙ্ক বাকি · {pendingSync}
+      </Text>
+      <Text style={{ fontFamily: T.fBody, fontSize: 10, color: 'rgba(255,255,255,0.88)', flex: 1 }}>
+        Pending upload · tap to retry
+      </Text>
+      <Pressable
+        onPress={onSyncPress}
+        disabled={syncing}
+        style={{
+          paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10,
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          minHeight: 44,
+          justifyContent: 'center',
+        }}>
+        {syncing ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={{ fontFamily: T.fBnBold, fontSize: 12, color: '#fff' }}>সিঙ্ক</Text>
+        )}
+      </Pressable>
     </LinearGradient>
   );
 }

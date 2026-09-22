@@ -1,0 +1,7 @@
+# Minimal Supabase CLI config. Replace project_id via `supabase link` before deploy.
+# Docs: https://supabase.com/docs/guides/cli/config
+
+project_id = "your-project-ref"
+
+[functions.finalize-assessment]
+verify_jwt = true

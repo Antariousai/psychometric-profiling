@@ -1,4 +1,9 @@
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import {
+  supabase,
+  supabaseUrl,
+  supabaseAnonKey,
+  isSupabaseConfigured,
+} from '../lib/supabase';
 import { PERSONAS } from '../data/personas';
 
 function rowToQuestion(row) {
@@ -186,13 +191,74 @@ export async function savePsychometricAssessmentResult({
   if (error) console.warn('[psymp] savePsychometricAssessmentResult', error.message);
 }
 
+/** Server-side authoritative score (migration 003+) — prefers Edge unless disabled. */
+export async function finalizeAssessmentViaEdge(sessionId) {
+  if (!sessionId || !isSupabaseConfigured || !supabase) return null;
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) {
+    throw new Error('Signed out — cannot save assessment to server.');
+  }
+
+  const base = (supabaseUrl || '').replace(/\/?$/, '');
+  const res = await fetch(`${base}/functions/v1/finalize-assessment`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: supabaseAnonKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `${res.status} finalize-assessment`);
+  return body;
+}
+
+/**
+ * Persist scored assessment: Edge Function first, optional client fallback for dev (RLS permits).
+ */
+export async function persistPsychometricAssessmentAuthoritative({
+  sessionId,
+  applicantUuid,
+  result,
+  answers,
+}) {
+  const preferEdge = process.env.EXPO_PUBLIC_PREFER_EDGE_FINALIZE !== 'false';
+
+  try {
+    if (preferEdge) {
+      await finalizeAssessmentViaEdge(sessionId);
+      return 'edge';
+    }
+  } catch (e) {
+    console.warn('[psymp] Edge finalize unavailable', e?.message || e);
+    if (process.env.EXPO_PUBLIC_ALLOW_CLIENT_RESULT_SNAPSHOT !== 'true') {
+      throw e;
+    }
+  }
+
+  await savePsychometricAssessmentResult({
+    sessionId,
+    applicantUuid,
+    result,
+    answers,
+  });
+  return 'client';
+}
+
 export async function saveCreditDecision({
   sessionId,
   applicantUuid,
   outcome,
   result,
 }) {
-  if (!sessionId || !isSupabaseConfigured || !supabase) return;
+  if (!sessionId) return;
+  if (!isSupabaseConfigured || !supabase) {
+    const { enqueue } = await import('../utils/syncQueue');
+    await enqueue({ type: 'decision', payload: { sessionId, applicantUuid, outcome, result } });
+    return;
+  }
   const { error } = await supabase.from('credit_decisions').insert({
     session_id: sessionId,
     applicant_uuid: applicantUuid,
@@ -202,4 +268,93 @@ export async function saveCreditDecision({
     flag_count: result?.flags?.length ?? 0,
   });
   if (error) console.warn('[psymp] saveCreditDecision', error.message);
+}
+
+/**
+ * Flush any queued assessment results that were saved while offline.
+ * Safe to call at app boot — no-ops when queue is empty or Supabase is unavailable.
+ * @returns {Promise<number>} count of successfully flushed items
+ */
+export async function flushSyncQueue() {
+  if (!isSupabaseConfigured) return 0;
+  const { loadQueue, removeFromQueue } = await import('../utils/syncQueue');
+  const queue = await loadQueue();
+  if (!queue.length) return 0;
+  let flushed = 0;
+  for (const item of queue) {
+    try {
+      if (item.type === 'assessment') {
+        await savePsychometricAssessmentResult(item.payload);
+        await removeFromQueue(item.enqueuedAt);
+        flushed++;
+      } else if (item.type === 'decision') {
+        await saveCreditDecision(item.payload);
+        await removeFromQueue(item.enqueuedAt);
+        flushed++;
+      }
+    } catch {
+      // Keep item in queue if it still fails; retry next time.
+    }
+  }
+  return flushed;
+}
+
+/**
+ * Fetch recent assessment sessions joined with applicant profile + result + decision.
+ * Returns up to `limit` rows newest-first.
+ * @returns {Promise<Array>}
+ */
+export async function fetchRecentSessions(limit = 20) {
+  if (!isSupabaseConfigured || !supabase) return [];
+  const { data, error } = await supabase
+    .from('assessment_sessions')
+    .select(`
+      id,
+      applicant_id,
+      created_at,
+      completed_at,
+      applicants ( id, slug, profile ),
+      psychometric_assessment_results ( overall, rating, risk_tier, flags ),
+      credit_decisions ( outcome, decided_at )
+    `)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.warn('[psymp] fetchRecentSessions', error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+/**
+ * Fetch officer-level aggregates: total sessions, avg score, approval rate, flag rate.
+ * @returns {Promise<{ total: number, avgScore: number, approvalRate: number, flagRate: number } | null>}
+ */
+export async function fetchOfficerStats() {
+  if (!isSupabaseConfigured || !supabase) return null;
+  const [sessRes, decRes] = await Promise.all([
+    supabase
+      .from('psychometric_assessment_results')
+      .select('overall, flags'),
+    supabase
+      .from('credit_decisions')
+      .select('outcome'),
+  ]);
+  if (sessRes.error || decRes.error) return null;
+
+  const results = sessRes.data ?? [];
+  const decisions = decRes.data ?? [];
+
+  const total = results.length;
+  const avgScore = total
+    ? Math.round(results.reduce((s, r) => s + (r.overall ?? 0), 0) / total)
+    : 0;
+  const flaggedCount = results.filter(r => Array.isArray(r.flags) && r.flags.length > 0).length;
+  const approvedCount = decisions.filter(d => d.outcome === 'approved').length;
+  const approvalRate = decisions.length
+    ? Math.round((approvedCount / decisions.length) * 100)
+    : 0;
+  const flagRate = total ? Math.round((flaggedCount / total) * 100) : 0;
+
+  return { total, avgScore, approvalRate, flagRate };
 }

@@ -1,9 +1,14 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { load, save, clearAll, K } from '../utils/storage';
+import { loadQueue } from '../utils/syncQueue';
 import { DIMENSIONS as DEFAULT_DIMENSIONS } from '../data/dimensions';
 import { PERSONAS, BLANK_APPLICANT, coerceApplicantProfile } from '../data/personas';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { fetchPsychometricDimensions, fetchApplicantProfileBySlug } from '../services/psympSupabase';
+import {
+  fetchPsychometricDimensions,
+  fetchApplicantProfileBySlug,
+  flushSyncQueue,
+} from '../services/psympSupabase';
 
 const AppCtx = createContext(null);
 
@@ -24,6 +29,7 @@ export function AppProvider({ children }) {
   const [dimensions, setDimensionsState] = useState(DEFAULT_DIMENSIONS);
   const [remoteApplicant, setRemoteApplicant] = useState(null);
   const [applicantDraft, setApplicantDraft] = useState(null);
+  const [queueSize, setQueueSize] = useState(0);
   const applicantIdRef = useRef(applicantId);
 
   useEffect(() => {
@@ -60,6 +66,19 @@ export function AppProvider({ children }) {
         if (Array.isArray(d) && d.length > 0) setDimensionsState(d);
       } catch (e) {
         console.warn('[App] dimensions fetch', e?.message || e);
+      }
+      // Attempt to flush any responses saved while offline
+      try {
+        const flushed = await flushSyncQueue();
+        if (flushed > 0) console.log(`[App] flushed ${flushed} queued item(s) to Supabase`);
+      } catch (e) {
+        console.warn('[App] syncQueue flush', e?.message || e);
+      }
+      try {
+        const q = await loadQueue();
+        setQueueSize(q.length);
+      } catch {
+        /* noop */
       }
     })();
   }, [hydrated]);
@@ -122,6 +141,28 @@ export function AppProvider({ children }) {
     save(K.profilePhoto, uri);
   };
 
+  const refreshPendingSync = useCallback(async () => {
+    try {
+      const q = await loadQueue();
+      setQueueSize(q.length);
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  const flushSyncAndRefresh = useCallback(async () => {
+    try {
+      await flushSyncQueue();
+    } catch {
+      /* noop */
+    }
+    await refreshPendingSync();
+  }, [refreshPendingSync]);
+
+  useEffect(() => {
+    if (hydrated) refreshPendingSync();
+  }, [hydrated, refreshPendingSync]);
+
   const addDecision = (entry) => {
     setDecisionsState(prev => {
       const next = [entry, ...prev];
@@ -144,9 +185,7 @@ export function AppProvider({ children }) {
     setApplicantDraft(null);
   };
 
-  const pendingSync = tweaks.offline && Object.keys(answers).length > 0
-    ? Math.min(Object.keys(answers).length, 9)
-    : 0;
+  const pendingSync = queueSize;
 
   const value = {
     applicantId, applicant, setApplicant,
@@ -155,7 +194,11 @@ export function AppProvider({ children }) {
     tweaks, setTweaks,
     showFreya, openFreya, closeFreya,
     currentQContext, setCurrentQContext,
-    pendingSync, hydrated, resetAll,
+    pendingSync,
+    refreshPendingSync,
+    flushSyncAndRefresh,
+    hydrated,
+    resetAll,
     profilePhoto, setProfilePhoto,
     decisions, addDecision,
     assessmentSessionId,

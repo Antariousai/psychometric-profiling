@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Image, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -6,9 +6,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { T } from '../../constants/tokens';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import BilingualLabel from '../../components/BilingualLabel';
 import Chip from '../../components/Chip';
 import FreyaOrb from '../../components/FreyaOrb';
+import { fetchOfficerStats } from '../../services/psympSupabase';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { bn as toBn } from '../../utils/format';
 
 const PO_PROFILE = {
   name: 'কামরুল হোসেন',
@@ -28,12 +32,6 @@ const PO_PROFILE = {
   supervisorEn: 'Rashedul Islam (BM)',
 };
 
-const PERFORMANCE = [
-  { bn: 'মোট মূল্যায়ন', en: 'Total assessments', val: '১৪৭', sub: 'এই মাসে', color: T.teal },
-  { bn: 'অনুমোদন হার', en: 'Approval rate', val: '৭১%', sub: 'গড়', color: T.green },
-  { bn: 'গড় স্কোর', en: 'Avg score', val: '৬৮৪', sub: '/১০০০', color: T.gold },
-  { bn: 'মিথ্যা সনাক্ত', en: 'Lie-flags', val: '১৩%', sub: 'হার', color: T.coral },
-];
 
 const RECENT_ACTIVITY = [
   { type: 'assessment', bn: 'নাসরিন বেগম — মূল্যায়ন সম্পন্ন', score: 742, rating: 'B', time: 'আজ ২:১৪ PM', icon: '✓', color: T.teal },
@@ -63,8 +61,57 @@ async function pickProfilePhoto(setProfilePhoto) {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { tweaks, setTweaks, profilePhoto, setProfilePhoto, resetAll } = useApp();
+  const { user } = useAuth();
+  const { tweaks, setTweaks, profilePhoto, setProfilePhoto, resetAll, decisions } = useApp();
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [dbStats, setDbStats] = useState(null);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    fetchOfficerStats().then(s => { if (s) setDbStats(s); }).catch(() => {});
+  }, []);
+
+  const perf = useMemo(() => {
+    if (dbStats) {
+      return [
+        { bn: 'মোট মূল্যায়ন', en: 'Total assessments', val: toBn(dbStats.total), sub: 'এ পর্যন্ত', color: T.teal },
+        { bn: 'অনুমোদন হার', en: 'Approval rate', val: `${toBn(dbStats.approvalRate)}%`, sub: 'গড়', color: T.green },
+        { bn: 'গড় স্কোর', en: 'Avg score', val: toBn(dbStats.avgScore), sub: '/১০০০', color: T.gold },
+        { bn: 'ফ্ল্যাগ হার', en: 'Flag rate', val: `${toBn(dbStats.flagRate)}%`, sub: 'হার', color: T.coral },
+      ];
+    }
+    const total = decisions.length;
+    const approved = decisions.filter(d => d.outcome === 'approved').length;
+    const approvalRate = total ? Math.round((approved / total) * 100) : 71;
+    const avgScore = total
+      ? Math.round(decisions.reduce((s, d) => s + (d.score ?? 0), 0) / total)
+      : 684;
+    const flagged = decisions.filter(d => d.outcome === 'review').length;
+    const flagRate = total ? Math.round((flagged / total) * 100) : 13;
+    return [
+      { bn: 'মোট মূল্যায়ন', en: 'Total assessments', val: toBn(total || 147), sub: 'এই মাসে', color: T.teal },
+      { bn: 'অনুমোদন হার', en: 'Approval rate', val: `${toBn(approvalRate)}%`, sub: 'গড়', color: T.green },
+      { bn: 'গড় স্কোর', en: 'Avg score', val: toBn(avgScore), sub: '/১০০০', color: T.gold },
+      { bn: 'মিথ্যা সনাক্ত', en: 'Lie-flags', val: `${toBn(flagRate)}%`, sub: 'হার', color: T.coral },
+    ];
+  }, [dbStats, decisions]);
+
+  const recentActivity = useMemo(() => {
+    if (!decisions.length) return RECENT_ACTIVITY;
+    return decisions.slice(0, 3).map(d => ({
+      type: 'assessment',
+      bn: `${d.applicantId} — ${d.outcome === 'approved' ? 'মূল্যায়ন অনুমোদিত' : d.outcome === 'declined' ? 'মূল্যায়ন প্রত্যাখ্যাত' : 'পুনর্বিবেচনায়'}`,
+      score: d.score,
+      rating: d.rating,
+      time: d.dateEn || new Date(d.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+      icon: d.outcome === 'approved' ? '✓' : d.outcome === 'declined' ? '✗' : '⋯',
+      color: d.outcome === 'approved' ? T.green : d.outcome === 'declined' ? T.coral : T.amber,
+    }));
+  }, [decisions]);
+
+  const displayName = user?.user_metadata?.full_name || PO_PROFILE.name;
+  const displayNameEn = PO_PROFILE.nameEn;
+  const displayPhone = user?.phone || PO_PROFILE.phone;
 
   return (
     <View style={{ flex: 1, backgroundColor: T.cream }}>
@@ -99,10 +146,10 @@ export default function ProfileScreen() {
             </Pressable>
 
             <Text style={{ fontFamily: T.fBnBlack, fontSize: 22, color: '#fff', marginBottom: 4 }}>
-              {PO_PROFILE.name}
+              {displayName}
             </Text>
             <Text style={{ fontFamily: T.fBody, fontSize: 12, color: 'rgba(255,255,255,0.6)', marginBottom: 10 }}>
-              {PO_PROFILE.nameEn}
+              {displayNameEn}
             </Text>
             <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
               <Chip color={T.teal} size={9}>{PO_PROFILE.id}</Chip>
@@ -119,7 +166,7 @@ export default function ProfileScreen() {
             {[
               { icon: '🏢', label: PO_PROFILE.branch },
               { icon: '📍', label: PO_PROFILE.region },
-              { icon: '📱', label: PO_PROFILE.phone },
+              { icon: '📱', label: displayPhone },
               { icon: '👤', label: PO_PROFILE.supervisor + ' — সুপারভাইজার' },
             ].map((item, i) => (
               <View key={i} style={{
@@ -143,7 +190,7 @@ export default function ProfileScreen() {
           <View style={{ marginBottom: 16 }}>
             <BilingualLabel bn="পারফরমেন্স (এই মাস)" en="Performance — current month" sizeBn={14} sizeEn={10} weight="700" style={{ marginBottom: 10, paddingHorizontal: 2 }} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {PERFORMANCE.map((p, i) => (
+              {perf.map((p, i) => (
                 <View key={i} style={{
                   width: '47%', flexGrow: 1,
                   backgroundColor: '#fff', borderRadius: 14,
@@ -166,7 +213,7 @@ export default function ProfileScreen() {
             padding: 14, marginBottom: 16,
           }}>
             <BilingualLabel bn="সাম্প্রতিক কার্যক্রম" en="Recent activity" sizeBn={13} sizeEn={10} weight="700" style={{ marginBottom: 12 }} />
-            {RECENT_ACTIVITY.map((a, i) => (
+            {recentActivity.map((a, i) => (
               <View key={i} style={{
                 flexDirection: 'row', alignItems: 'center', gap: 12,
                 paddingVertical: 10,
@@ -184,12 +231,12 @@ export default function ProfileScreen() {
                   <Text style={{ fontFamily: T.fBn, fontSize: 12, color: T.ink, lineHeight: 18 }}>{a.bn}</Text>
                   <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4, marginTop: 2 }}>{a.time}</Text>
                 </View>
-                {a.score && (
+                {a.score != null ? (
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text style={{ fontFamily: T.fHead, fontSize: 18, color: T.teal }}>{a.score}</Text>
                     <Chip color={T.teal} size={8}>{a.rating}</Chip>
                   </View>
-                )}
+              ) : null}
               </View>
             ))}
           </View>

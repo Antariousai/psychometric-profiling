@@ -1,3 +1,6 @@
+/** Mirror of app `data/scoring.js` — keep algorithm in sync across releases. */
+
+// deno-lint-ignore-file no-explicit-any
 // Per-question explanation when answered suspiciously fast
 const TOO_FAST_NOTES = {
   q1: {
@@ -148,12 +151,10 @@ export function computeScore(answers, questions, dimensions) {
     const a = answers[q.id];
     if (!a) return;
     const dim = byDim[q.dim];
-    if (!dim) return;
-    const qWeight = typeof q.weight === 'number' ? q.weight : 1;
     let score, max;
     if (q.type === 'scale') {
-      score = ((a.value - q.scale.min) / (q.scale.max - q.scale.min)) * 5 * qWeight;
-      max = 5 * qWeight;
+      score = ((a.value - q.scale.min) / (q.scale.max - q.scale.min)) * 5;
+      max = 5;
       if (q.socialDesirability && a.value === q.scale.max && a.ms < q.expectedMs * 0.5) {
         const secs = (a.ms / 1000).toFixed(1);
         const expSecs = Math.round(q.expectedMs / 1000);
@@ -173,8 +174,8 @@ export function computeScore(answers, questions, dimensions) {
       }
     } else {
       const opt = q.options[a.value];
-      score = (opt ? opt.score : 0) * qWeight;
-      max = 5 * qWeight;
+      score = opt ? opt.score : 0;
+      max = 5;
       if (q.expectedMs && a.ms < q.expectedMs * 0.25) {
         const secs = (a.ms / 1000).toFixed(1);
         const expSecs = Math.round(q.expectedMs / 1000);
@@ -233,21 +234,12 @@ export function computeScore(answers, questions, dimensions) {
 
   const dimScores = dimensions.map(d => ({
     ...d,
-    pct: byDim[d.id] && byDim[d.id].max
-      ? Math.round((byDim[d.id].total / byDim[d.id].max) * 100)
-      : 0,
-    raw: byDim[d.id]?.total ?? 0,
-    max: byDim[d.id]?.max ?? 0,
+    pct: byDim[d.id].max ? Math.round((byDim[d.id].total / byDim[d.id].max) * 100) : 0,
+    raw: byDim[d.id].total,
+    max: byDim[d.id].max,
   }));
 
-  // Weighted average: dimensions with higher weight (e.g. financial, resilience)
-  // contribute more. Falls back to simple average if weights are missing/don't sum to 1.
-  const totalWeight = dimensions.reduce((s, d) => s + (d.weight ?? 1), 0);
-  const totalPct = dimScores.reduce((s, d) => {
-    const w = (d.weight ?? 1) / totalWeight;
-    return s + d.pct * w;
-  }, 0);
-
+  const totalPct = dimScores.reduce((s, d) => s + d.pct, 0) / dimScores.length;
   const flagPenalty = Math.min(flags.length * 15, 120);
   const overall = Math.max(0, Math.round(totalPct * 10 - flagPenalty));
 

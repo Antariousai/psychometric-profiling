@@ -6,6 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Eas
 import { T } from '../constants/tokens';
 import { useApp } from '../context/AppContext';
 import FreyaOrb from '../components/FreyaOrb';
+import { save, K } from '../utils/storage';
 
 const MESSAGES = [
   { bn: 'উত্তরগুলো পড়ে দেখছি…', en: 'Analyzing responses…', icon: '◐' },
@@ -34,6 +35,10 @@ export default function ScoringScreen() {
   const router = useRouter();
   const { applicant } = useApp();
   const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    void save(K.assessmentDraftApplicant, null);
+  }, []);
 
   useEffect(() => {
     if (step >= MESSAGES.length) {

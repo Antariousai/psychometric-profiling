@@ -7,7 +7,7 @@ import { T } from '../constants/tokens';
 import { QUESTIONS } from '../data/questions';
 import { computeScore } from '../data/scoring';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { saveCreditDecision, savePsychometricAssessmentResult } from '../services/psympSupabase';
+import { saveCreditDecision, persistPsychometricAssessmentAuthoritative } from '../services/psympSupabase';
 import { useApp } from '../context/AppContext';
 import BilingualLabel from '../components/BilingualLabel';
 import BrandHeader from '../components/BrandHeader';
@@ -16,6 +16,7 @@ import FreyaOrb from '../components/FreyaOrb';
 import FreyaButton from '../components/FreyaButton';
 import RadarChart from '../components/RadarChart';
 import { bn as toBn, fmtTk } from '../utils/format';
+import { calcLoanRecommendation } from '../constants/creditPolicy';
 
 const PRESET = {
   nasrin: { overall: 742, rating: 'B', flagCount: 1 },
@@ -75,6 +76,7 @@ export default function ResultScreen() {
   } = useApp();
   const [tab, setTab] = useState('summary');
   const [flagModal, setFlagModal] = useState(false);
+  const [decisionModal, setDecisionModal] = useState(null);
   const [toast, setToast] = useState(null);
   const toastAnim = useRef(new Animated.Value(0)).current;
 
@@ -102,7 +104,7 @@ export default function ResultScreen() {
     if (!isSupabaseConfigured || !assessmentSessionId) return;
     if (!answers || Object.keys(answers).length === 0) return;
     const r = computeScore(answers, questionBank, dimensionList);
-    void savePsychometricAssessmentResult({
+    void persistPsychometricAssessmentAuthoritative({
       sessionId: assessmentSessionId,
       applicantUuid: assessmentApplicantUuid,
       result: r,
@@ -117,12 +119,7 @@ export default function ResultScreen() {
   ]);
 
   const scoreColor = colorForRating(result.rating);
-  const recLoanAmt =
-    result.rating === 'A' ? applicant.loanAsk
-      : result.rating === 'B' ? Math.round(applicant.loanAsk * 0.85)
-      : result.rating === 'C' ? Math.round(applicant.loanAsk * 0.6)
-      : Math.round(applicant.loanAsk * 0.35);
-  const emi = Math.round((recLoanAmt * 1.18) / result.tenure);
+  const { recLoanAmt, emi } = calcLoanRecommendation(result.rating, applicant.loanAsk ?? 0);
 
   const TOAST_CONFIG = {
     approved: {
@@ -145,6 +142,7 @@ export default function ResultScreen() {
   const makeDecision = (outcome) => {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const now = new Date();
+    const refShort = (assessmentSessionId || `local-${now.getTime()}`).toString().slice(0, 10);
     if (isSupabaseConfigured && assessmentSessionId) {
       void saveCreditDecision({
         sessionId: assessmentSessionId,
@@ -164,12 +162,19 @@ export default function ResultScreen() {
       flags: result.flags.length,
       timestamp: now.getTime(),
       dateEn: `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`,
+      sessionId: assessmentSessionId ?? null,
     });
-    setToast(TOAST_CONFIG[outcome]);
+    const baseToast = TOAST_CONFIG[outcome];
+    setToast({
+      ...baseToast,
+      bn: `${baseToast.bn}\n📎 ${refShort}`,
+      en: `${baseToast.en} · Ref ${refShort}`,
+    });
+    setDecisionModal(null);
     toastAnim.setValue(0);
     Animated.sequence([
       Animated.spring(toastAnim, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 6 }),
-      Animated.delay(1800),
+      Animated.delay(2400),
       Animated.timing(toastAnim, { toValue: 0, duration: 280, useNativeDriver: true }),
     ]).start(() => router.replace('/(tabs)/dashboard'));
   };
@@ -182,6 +187,22 @@ export default function ResultScreen() {
         onBack={() => router.replace('/(tabs)/dashboard')}
         right={<Chip color={T.teal}>✓ সম্পন্ন</Chip>}
       />
+      {result.flags.length > 0 ? (
+        <Pressable
+          onPress={() => { setTab('flags'); }}
+          style={{
+            flexDirection: 'row', alignItems: 'center',
+            paddingVertical: 12, paddingHorizontal: 16,
+            backgroundColor: 'rgba(224,79,79,0.08)',
+            borderBottomWidth: 1, borderBottomColor: 'rgba(224,79,79,0.2)',
+            gap: 10, minHeight: 48,
+          }}>
+          <Text style={{ fontFamily: T.fBnBold, fontSize: 12, color: T.coral }}>
+            ⚑ {toBn(result.flags.length)}টি অসঙ্গতি — আগে দেখুন
+          </Text>
+          <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4 }}>Tap →</Text>
+        </Pressable>
+      ) : null}
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         <LinearGradient
           colors={[T.navy, T.navy2]}
@@ -271,12 +292,17 @@ export default function ResultScreen() {
           ].map(tt => {
             const on = tab === tt.id;
             return (
-              <Pressable key={tt.id} onPress={() => setTab(tt.id)} style={{
-                flex: 1, paddingVertical: 10,
-                borderBottomWidth: 2.5,
-                borderBottomColor: on ? T.teal : 'transparent',
-                alignItems: 'center', gap: 2,
-              }}>
+              <Pressable
+                key={tt.id}
+                onPress={() => setTab(tt.id)}
+                style={{
+                  flex: 1,
+                  minHeight: 48,
+                  paddingVertical: 12,
+                  borderBottomWidth: 2.5,
+                  borderBottomColor: on ? T.teal : 'transparent',
+                  alignItems: 'center', gap: 2, justifyContent: 'center',
+                }}>
                 <View style={{ flexDirection: 'row', gap: 3 }}>
                   <Text style={{ fontFamily: T.fBnBold, fontSize: 12, color: on ? T.navy : T.ink3 }}>{tt.bn}</Text>
                   {tt.n > 0 ? (
@@ -338,9 +364,10 @@ export default function ResultScreen() {
           <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.amber }}>⚑ ফ্ল্যাগ করুন</Text>
         </Pressable>
         <Pressable
-          onPress={() => makeDecision('approved')}
+          onPress={() => setDecisionModal('approved')}
           style={{
             flex: 1.3, paddingVertical: 13, borderRadius: 12,
+            minHeight: 48,
             backgroundColor: T.teal,
             alignItems: 'center', justifyContent: 'center',
             shadowColor: T.teal, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
@@ -348,9 +375,10 @@ export default function ResultScreen() {
           <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>✓ অনুমোদন করুন</Text>
         </Pressable>
         <Pressable
-          onPress={() => makeDecision('declined')}
+          onPress={() => setDecisionModal('declined')}
           style={{
             flex: 1.3, paddingVertical: 13, borderRadius: 12,
+            minHeight: 48,
             backgroundColor: T.coral,
             alignItems: 'center', justifyContent: 'center',
             shadowColor: T.coral, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 4,
@@ -358,6 +386,71 @@ export default function ResultScreen() {
           <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>✗ প্রত্যাখ্যান করুন</Text>
         </Pressable>
       </View>
+
+      {/* Confirm approve / decline */}
+      <Modal visible={Boolean(decisionModal)} transparent animationType="fade" onRequestClose={() => setDecisionModal(null)}>
+        <View style={{
+          flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+          justifyContent: 'center', alignItems: 'center', paddingHorizontal: 22,
+        }}>
+          <View style={{
+            backgroundColor: '#fff', borderRadius: 18, padding: 20, width: '100%', maxWidth: 400,
+            borderWidth: 1, borderColor: T.border,
+          }}>
+            <Text style={{ fontFamily: T.fMonoBold, fontSize: 9, color: T.ink4, letterSpacing: 1.2, marginBottom: 8 }}>
+              CONFIRM DECISION
+            </Text>
+            <Text style={{ fontFamily: T.fBnBlack, fontSize: 17, color: T.navy, marginBottom: 6 }}>
+              {decisionModal === 'approved'
+                ? 'অনুমোদন নিশ্চিত করুন'
+                : decisionModal === 'declined'
+                  ? 'প্রত্যাখ্যান নিশ্চিত করুন'
+                  : 'ম্যানেজারের কাছে পাঠাতে'}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+              <Chip color={scoreColor} size={9}>{applicant.name}</Chip>
+              <Chip color={T.teal} size={9}>Score {toBn(result.overall)}</Chip>
+              <Chip color={scoreColor} size={9}>R {result.rating}</Chip>
+              <Chip color={result.flags.length ? T.coral : T.green} size={9}>⚑ {toBn(result.flags.length)}</Chip>
+            </View>
+            <Text style={{ fontFamily: T.fBn, fontSize: 12.5, color: T.ink2, lineHeight: 20, marginBottom: 20 }}>
+              {decisionModal === 'approved'
+                ? 'আপনি কি নিশ্চিতভাবে এই সুপারিশ অনুযায়ী অনুমোদন রেকর্ড করতে চান?'
+                : decisionModal === 'declined'
+                  ? 'আপনি কি নিশ্চিতভাবে এই আবেদন প্রত্যাখ্যান হিসেবে সংরক্ষণ করবেন?'
+                  : 'প্রোফাইলটি পুনর্বিবেচনায় পাঠানো হবে।'}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Pressable
+                onPress={() => setDecisionModal(null)}
+                style={{
+                  flex: 1, minHeight: 48, paddingVertical: 12, borderRadius: 12,
+                  borderWidth: 1.5, borderColor: T.border, alignItems: 'center', justifyContent: 'center',
+                }}>
+                <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.ink2 }}>পিছনে</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => decisionModal && makeDecision(decisionModal)}
+                style={{
+                  flex: 1.2, minHeight: 48, paddingVertical: 12, borderRadius: 12,
+                  backgroundColor:
+                    decisionModal === 'approved' ? T.teal
+                      : decisionModal === 'declined' ? T.coral
+                        : T.amber,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: '#fff' }}>
+                  {decisionModal === 'approved'
+                    ? 'অনুমোদন'
+                    : decisionModal === 'declined'
+                      ? 'প্রত্যাখ্যান'
+                      : 'পাঠান'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Flag confirmation modal */}
       <Modal visible={flagModal} transparent animationType="fade" onRequestClose={() => setFlagModal(false)}>
@@ -400,7 +493,7 @@ export default function ResultScreen() {
                 <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.ink2 }}>বাতিল করুন</Text>
               </Pressable>
               <Pressable
-                onPress={() => { setFlagModal(false); makeDecision('review'); }}
+                onPress={() => { setFlagModal(false); setDecisionModal('review'); }}
                 style={{
                   flex: 1.4, paddingVertical: 13, borderRadius: 12,
                   backgroundColor: T.amber,
