@@ -192,18 +192,26 @@ Deno.serve(async (req) => {
             vi_band: result.viBand ?? result.vi_band ?? null,
             band: result.band ?? null,
             flags: result.flags ?? [],
-            signals: result.signals ?? {},
-            constructs: result.constructs ?? {},
             reason_codes: result.reasonCodes ?? result.reason_codes ?? [],
             recommendation: result.recommendation ?? null,
-            inputs_digest: result.inputsDigest ?? null,
-            signature: result.signature ?? null,
             visible_to_decision_makers: true,
             computed_at: new Date().toISOString(),
           },
           { onConflict: 'session_id' },
         );
         if (upErr) throw new Error(upErr.message);
+
+        const { error: detailErr } = await admin.from('prottoy_score_detail').upsert(
+          {
+            session_id: sessionId,
+            signals: result.signals ?? {},
+            constructs: result.constructs ?? {},
+            inputs_digest: result.inputsDigest ?? null,
+            signature: result.signature ?? null,
+          },
+          { onConflict: 'session_id' },
+        );
+        if (detailErr) throw new Error(detailErr.message);
         scored = true;
       } catch (e) {
         scoreError = e instanceof Error ? e.message : String(e);

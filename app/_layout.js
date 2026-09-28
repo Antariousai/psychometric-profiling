@@ -32,6 +32,8 @@ function RootStackScreens() {
       <Stack.Screen name="result" />
       <Stack.Screen name="manager" />
       <Stack.Screen name="manager-session" />
+      <Stack.Screen name="branch-manager" />
+      <Stack.Screen name="antarious" />
       <Stack.Screen name="kyc" />
       <Stack.Screen name="credit" />
       <Stack.Screen name="repayment" />

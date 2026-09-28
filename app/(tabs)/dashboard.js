@@ -289,7 +289,7 @@ export default function DashboardScreen() {
 
         {String(process.env.EXPO_PUBLIC_PROTTOY_BANK || '').toLowerCase() === 'true' ? (
           <Pressable
-            onPress={() => router.push('/manager')}
+            onPress={() => router.push('/branch-manager')}
             style={{
               marginHorizontal: 16, marginTop: 10,
               backgroundColor: T.navy, borderRadius: 14,
@@ -298,12 +298,33 @@ export default function DashboardScreen() {
             }}
           >
             <View>
-              <Text style={{ fontFamily: T.fBnBold, fontSize: 14, color: '#fff' }}>ম্যানেজার সিদ্ধান্ত</Text>
+              <Text style={{ fontFamily: T.fBnBold, fontSize: 14, color: '#fff' }}>শাখা ব্যবস্থাপক</Text>
               <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.teal, marginTop: 3 }}>
-                PS · WI · SRI · VI · ROLE-GATED
+                OVERALL SCORE · SIGN-IN
               </Text>
             </View>
             <Text style={{ color: '#fff', fontSize: 18 }}>→</Text>
+          </Pressable>
+        ) : null}
+
+        {String(process.env.EXPO_PUBLIC_PROTTOY_BANK || '').toLowerCase() === 'true' ? (
+          <Pressable
+            onPress={() => router.push('/antarious')}
+            style={{
+              marginHorizontal: 16, marginTop: 8,
+              backgroundColor: '#fff', borderRadius: 14,
+              paddingVertical: 12, paddingHorizontal: 16,
+              borderWidth: 1, borderColor: T.border,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <View>
+              <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.navy }}>Antarious scoring lab</Text>
+              <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4, marginTop: 3 }}>
+                FORMULAS · EMAIL + PASSWORD
+              </Text>
+            </View>
+            <Text style={{ color: T.navy, fontSize: 18 }}>→</Text>
           </Pressable>
         ) : null}
 

@@ -13,6 +13,8 @@ export default function Field({
   placeholder,
   maxLength,
   editable = true,
+  autoCapitalize,
+  autoCorrect,
 }) {
   return (
     <View style={{ marginBottom: 16 }}>
@@ -56,6 +58,8 @@ export default function Field({
           placeholderTextColor={T.ink4}
           maxLength={maxLength}
           editable={editable}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
           style={{
             flex: 1,
             paddingHorizontal: 12,
