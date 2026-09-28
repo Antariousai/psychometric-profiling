@@ -312,6 +312,7 @@ export default function AssessmentScreen() {
     // Omit localAnswers from deps — only run when bank/session is ready; avoids opening modal after first answer in a new run.
   }, [loadingQuestions, questions, applicantId, resetSessionKey, answeredInBank]);
 
+  const answeredCount = answeredInBank(questions, localAnswers);
   const estMinutesLeft = Math.max(0, Math.round((questions.length - answeredCount) * AVG_MINUTES_PER_QUESTION));
 
   const incompleteLeave = questions.length > 0 && answeredInBank(questions, localAnswers) < questions.length
