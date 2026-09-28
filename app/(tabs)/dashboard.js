@@ -17,12 +17,6 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 import { signOutStaff } from '../../services/authSupabase';
 import { fetchRecentSessions, fetchOfficerStats } from '../../services/psympSupabase';
 
-const DEMO_APPLICANTS = [
-  { id: 'nasrin', status: 'completed', score: 742, rating: 'B', flags: 1, whenEn: 'Today · 2:14 PM' },
-  { id: 'rafiq',  status: 'in-progress', step: 14, total: 41, whenEn: 'Today · 11:20 AM' },
-  { id: 'shima',  status: 'completed', score: 821, rating: 'A', flags: 0, whenEn: 'Yesterday · 3:45 PM' },
-];
-
 const MODULES = [
   {
     id: 'kyc',
@@ -158,17 +152,15 @@ export default function DashboardScreen() {
     const todayDecs = decisions.filter(d => new Date(d.timestamp).toDateString() === todayStr);
     const flaggedTotal = decisions.filter(d => d.outcome === 'review').length;
     return [
-      { bn: 'আজ যতজনকে দেখলাম', en: "Today's assessments", val: toBn(7 + todayDecs.length), accent: T.teal },
-      { bn: 'এখনো বাকি আছে', en: 'Pending review', val: toBn(Math.max(0, 3 - todayDecs.length)), accent: T.gold },
-      { bn: 'সন্দেহের ঘর', en: 'Risk flags', val: toBn(2 + flaggedTotal), accent: T.coral },
+      { bn: 'আজ যতজনকে দেখলাম', en: "Today's assessments", val: toBn(todayDecs.length), accent: T.teal },
+      { bn: 'এখনো বাকি আছে', en: 'Pending review', val: toBn(0), accent: T.gold },
+      { bn: 'সন্দেহের ঘর', en: 'Risk flags', val: toBn(flaggedTotal), accent: T.coral },
     ];
   }, [decisions, dbStats]);
 
   const recentApplicants = useMemo(() => {
-    if (dbSessions && dbSessions.length > 0) {
-      return dbSessions.slice(0, 5).map(sessionToRow);
-    }
-    return DEMO_APPLICANTS;
+    if (!dbSessions?.length) return [];
+    return dbSessions.slice(0, 5).map(sessionToRow);
   }, [dbSessions]);
 
   const openApplicant = (a) => {
@@ -304,27 +296,6 @@ export default function DashboardScreen() {
               </Text>
             </View>
             <Text style={{ color: '#fff', fontSize: 18 }}>→</Text>
-          </Pressable>
-        ) : null}
-
-        {String(process.env.EXPO_PUBLIC_PROTTOY_BANK || '').toLowerCase() === 'true' ? (
-          <Pressable
-            onPress={() => router.push('/antarious')}
-            style={{
-              marginHorizontal: 16, marginTop: 8,
-              backgroundColor: '#fff', borderRadius: 14,
-              paddingVertical: 12, paddingHorizontal: 16,
-              borderWidth: 1, borderColor: T.border,
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-            }}
-          >
-            <View>
-              <Text style={{ fontFamily: T.fBnBold, fontSize: 13, color: T.navy }}>Antarious scoring lab</Text>
-              <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4, marginTop: 3 }}>
-                FORMULAS · EMAIL + PASSWORD
-              </Text>
-            </View>
-            <Text style={{ color: T.navy, fontSize: 18 }}>→</Text>
           </Pressable>
         ) : null}
 

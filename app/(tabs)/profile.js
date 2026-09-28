@@ -33,12 +33,6 @@ const PO_PROFILE = {
 };
 
 
-const RECENT_ACTIVITY = [
-  { type: 'assessment', bn: 'নাসরিন বেগম — মূল্যায়ন সম্পন্ন', score: 742, rating: 'B', time: 'আজ ২:১৪ PM', icon: '✓', color: T.teal },
-  { type: 'field', bn: 'শিমা আক্তার — ফিল্ড ভিজিট', score: null, rating: null, time: 'আজ ১১:৩০ AM', icon: '◬', color: T.leaf },
-  { type: 'assessment', bn: 'রফিক উদ্দিন — মূল্যায়ন চলছে', score: null, rating: null, time: 'গতকাল ৩:৪৫ PM', icon: '⋯', color: T.amber },
-];
-
 const CERTIFICATIONS = [
   { bn: 'সাইকোমেট্রিক মূল্যায়ন প্রশিক্ষণ', en: 'Psychometric Assessment Training', year: '২০২৩', color: T.teal },
   { bn: 'PKSF ডিজিটাল কেওয়াইসি', en: 'PKSF Digital KYC Certification', year: '২০২৪', color: T.gold },
@@ -82,14 +76,14 @@ export default function ProfileScreen() {
     }
     const total = decisions.length;
     const approved = decisions.filter(d => d.outcome === 'approved').length;
-    const approvalRate = total ? Math.round((approved / total) * 100) : 71;
+    const approvalRate = total ? Math.round((approved / total) * 100) : 0;
     const avgScore = total
       ? Math.round(decisions.reduce((s, d) => s + (d.score ?? 0), 0) / total)
-      : 684;
+      : 0;
     const flagged = decisions.filter(d => d.outcome === 'review').length;
-    const flagRate = total ? Math.round((flagged / total) * 100) : 13;
+    const flagRate = total ? Math.round((flagged / total) * 100) : 0;
     return [
-      { bn: 'মোট মূল্যায়ন', en: 'Total assessments', val: toBn(total || 147), sub: 'এই মাসে', color: T.teal },
+      { bn: 'মোট মূল্যায়ন', en: 'Total assessments', val: toBn(total), sub: 'এই মাসে', color: T.teal },
       { bn: 'অনুমোদন হার', en: 'Approval rate', val: `${toBn(approvalRate)}%`, sub: 'গড়', color: T.green },
       { bn: 'গড় স্কোর', en: 'Avg score', val: toBn(avgScore), sub: '/১০০০', color: T.gold },
       { bn: 'মিথ্যা সনাক্ত', en: 'Lie-flags', val: `${toBn(flagRate)}%`, sub: 'হার', color: T.coral },
@@ -97,7 +91,7 @@ export default function ProfileScreen() {
   }, [dbStats, decisions]);
 
   const recentActivity = useMemo(() => {
-    if (!decisions.length) return RECENT_ACTIVITY;
+    if (!decisions.length) return [];
     return decisions.slice(0, 3).map(d => ({
       type: 'assessment',
       bn: `${d.applicantId} — ${d.outcome === 'approved' ? 'মূল্যায়ন অনুমোদিত' : d.outcome === 'declined' ? 'মূল্যায়ন প্রত্যাখ্যাত' : 'পুনর্বিবেচনায়'}`,
@@ -213,11 +207,14 @@ export default function ProfileScreen() {
             padding: 14, marginBottom: 16,
           }}>
             <BilingualLabel bn="সাম্প্রতিক কার্যক্রম" en="Recent activity" sizeBn={13} sizeEn={10} weight="700" style={{ marginBottom: 12 }} />
+            {recentActivity.length === 0 ? (
+              <Text style={{ fontFamily: T.fBn, fontSize: 12, color: T.ink4 }}>এখনো কোনো মূল্যায়ন নেই</Text>
+            ) : null}
             {recentActivity.map((a, i) => (
               <View key={i} style={{
                 flexDirection: 'row', alignItems: 'center', gap: 12,
                 paddingVertical: 10,
-                borderBottomWidth: i < RECENT_ACTIVITY.length - 1 ? 1 : 0,
+                borderBottomWidth: i < recentActivity.length - 1 ? 1 : 0,
                 borderBottomColor: T.border,
               }}>
                 <View style={{

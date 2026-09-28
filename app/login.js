@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   TextInput,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -254,6 +255,24 @@ export default function LoginScreen() {
               PKSF-সুরক্ষিত। ডেটা সংগ্রহ করে শুধু আপনার সংস্থার Supabase টেন্যান্টেই সংরক্ষিত হয়।
             </Text>
           </View>
+
+          <Pressable
+            onPress={() => router.push('/branch-manager')}
+            style={{
+              marginTop: 14,
+              backgroundColor: T.navy, borderRadius: 14,
+              paddingVertical: 14, paddingHorizontal: 16,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <View>
+              <Text style={{ fontFamily: T.fBnBold, fontSize: 14, color: '#fff' }}>শাখা ব্যবস্থাপক</Text>
+              <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.teal, marginTop: 3 }}>
+                Overall score · sign-in
+              </Text>
+            </View>
+            <Text style={{ color: '#fff', fontSize: 18 }}>→</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
