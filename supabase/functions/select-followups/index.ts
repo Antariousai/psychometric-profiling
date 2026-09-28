@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { selectFollowUps, selectFollowupsStub, stripItemForField, hashSeed } from '../_shared/prottoy-engine/index.ts';
+import { isAnonBearer, ownsSession } from '../_shared/field-auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -23,9 +24,10 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const { data: authData, error: authErr } = await userClient.auth.getUser();
-    const user = authData?.user;
-    if (authErr || !user?.id) {
+    const { data: authData } = await userClient.auth.getUser();
+    const user = authData?.user ?? null;
+    const anonField = !user?.id && isAnonBearer(authHeader, anonKey);
+    if (!user?.id && !anonField) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...cors, 'Content-Type': 'application/json' },
@@ -57,7 +59,7 @@ Deno.serve(async (req) => {
         headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
-    if (sess.created_by !== user.id) {
+    if (!ownsSession(sess.created_by, user?.id ?? null, anonField)) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
         headers: { ...cors, 'Content-Type': 'application/json' },

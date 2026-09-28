@@ -46,9 +46,11 @@ function speakText(text) {
 }
 
 function OptionList({ q, answered, onAnswer, useOptionIds = false }) {
+  const options = Array.isArray(q.options) ? q.options : [];
+  if (!options.length) return null;
   return (
     <View style={{ gap: 10 }}>
-      {q.options.map((opt, i) => {
+      {options.map((opt, i) => {
         const optionKey = useOptionIds ? (opt.id ?? String(i)) : i;
         const sel = useOptionIds
           ? answered?.optionId === opt.id
@@ -177,7 +179,7 @@ export default function AssessmentScreen() {
     prottoyConsentAccepted,
   } = useApp();
   const prottoyOn = isProttoyBankEnabled();
-  const [questions, setQuestions] = useState(QUESTIONS);
+  const [questions, setQuestions] = useState(() => (isProttoyBankEnabled() ? [] : QUESTIONS));
   const [loadingQuestions, setLoadingQuestions] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [idx, setIdx] = useState(0);
@@ -212,7 +214,7 @@ export default function AssessmentScreen() {
       setLoadingQuestions(true);
       setLoadError(null);
       setCoreDone(false);
-      let list = QUESTIONS;
+      let list = prottoyOn ? [] : QUESTIONS;
       let session = null;
       let remoteQuestionCount = 0;
       try {
@@ -233,6 +235,7 @@ export default function AssessmentScreen() {
           if (sid) {
             const assembled = await assembleProttoyForm(sid, prottoyCategory || 'JAG');
             list = (assembled.items || []).map((it) => strippedItemToQuestion(it, { isFollowup: false }));
+            if (!list.length) throw new Error('Prottoy form came back empty');
             remoteQuestionCount = list.length;
             canPersistAnswersToDb.current = list.length === 40;
           } else {
@@ -265,6 +268,8 @@ export default function AssessmentScreen() {
         if (!prottoyOn) {
           list = QUESTIONS;
           session = null;
+        } else {
+          list = [];
         }
       }
       if (cancelled) return;

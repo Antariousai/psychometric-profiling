@@ -3,5 +3,11 @@
 
 project_id = "your-project-ref"
 
+[functions.assemble-form]
+verify_jwt = true
+
+[functions.select-followups]
+verify_jwt = true
+
 [functions.finalize-assessment]
 verify_jwt = true

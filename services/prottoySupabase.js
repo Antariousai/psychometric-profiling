@@ -11,7 +11,7 @@ import {
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  const token = data.session?.access_token || supabaseAnonKey;
   if (!token) throw new Error('Signed out — cannot call Prottoy Edge functions.');
   return {
     Authorization: `Bearer ${token}`,
