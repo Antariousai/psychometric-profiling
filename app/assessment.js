@@ -24,8 +24,16 @@ import {
   completeAssessmentSession,
   saveAssessmentResponsesBatch,
 } from '../services/psympSupabase';
+import {
+  assembleProttoyForm,
+  selectProttoyFollowups,
+  saveProttoyResponse,
+  strippedItemToQuestion,
+} from '../services/prottoySupabase';
+import { isProttoyBankEnabled } from '../lib/prottoyFlags';
 
 const AVG_MINUTES_PER_QUESTION = 0.35;
+const PROTTOY_DIM = { id: 'prottoy', bn: 'প্রত্যয়', en: 'Prottoy', color: T.teal, icon: '◇' };
 
 function speakText(text) {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
@@ -37,15 +45,18 @@ function speakText(text) {
   }
 }
 
-function OptionList({ q, answered, onAnswer }) {
+function OptionList({ q, answered, onAnswer, useOptionIds = false }) {
   return (
     <View style={{ gap: 10 }}>
       {q.options.map((opt, i) => {
-        const sel = answered?.value === i;
+        const optionKey = useOptionIds ? (opt.id ?? String(i)) : i;
+        const sel = useOptionIds
+          ? answered?.optionId === opt.id
+          : answered?.value === i;
         return (
           <Pressable
-            key={i}
-            onPress={() => onAnswer(i)}
+            key={opt.id || i}
+            onPress={() => onAnswer(optionKey)}
             style={{
               minHeight: 48,
               paddingVertical: 14, paddingHorizontal: 16,
@@ -77,10 +88,12 @@ function OptionList({ q, answered, onAnswer }) {
                 fontFamily: sel ? T.fBnBold : T.fBn, fontSize: 14,
                 color: T.ink, lineHeight: 22,
               }}>{opt.bn}</Text>
-              <Text style={{
-                fontFamily: T.fBody, fontSize: 10, color: T.ink3,
-                fontStyle: 'italic', marginTop: 4, lineHeight: 14,
-              }}>{opt.en}</Text>
+              {opt.en ? (
+                <Text style={{
+                  fontFamily: T.fBody, fontSize: 10, color: T.ink3,
+                  fontStyle: 'italic', marginTop: 4, lineHeight: 14,
+                }}>{opt.en}</Text>
+              ) : null}
             </View>
           </Pressable>
         );
@@ -160,7 +173,10 @@ export default function AssessmentScreen() {
     dimensions,
     pendingSync,
     flushSyncAndRefresh,
+    prottoyCategory,
+    prottoyConsentAccepted,
   } = useApp();
+  const prottoyOn = isProttoyBankEnabled();
   const [questions, setQuestions] = useState(QUESTIONS);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -171,26 +187,58 @@ export default function AssessmentScreen() {
   const [resumeOpen, setResumeOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [coreDone, setCoreDone] = useState(false);
   const justSavedTimer = useRef(null);
   const startAt = useRef(Date.now());
   const firstRender = useRef(true);
   const canPersistAnswersToDb = useRef(false);
   const resumeDismissed = useRef(false);
+  const sessionIdRef = useRef(assessmentSessionId);
+  sessionIdRef.current = assessmentSessionId;
 
   useEffect(() => {
     resumeDismissed.current = false;
   }, [applicantId, resetSessionKey]);
 
   useEffect(() => {
+    if (prottoyOn && !prottoyConsentAccepted) {
+      router.replace('/consent');
+    }
+  }, [prottoyOn, prottoyConsentAccepted]);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoadingQuestions(true);
       setLoadError(null);
+      setCoreDone(false);
       let list = QUESTIONS;
       let session = null;
       let remoteQuestionCount = 0;
       try {
-        if (isSupabaseConfigured) {
+        if (prottoyOn && isSupabaseConfigured) {
+          let sid = assessmentSessionId;
+          if (!sid) {
+            try {
+              session = await createAssessmentSession(applicantId, applicant);
+              sid = session?.sessionId ?? null;
+              if (!cancelled) {
+                setAssessmentSessionId(sid);
+                setAssessmentApplicantUuid(session?.applicantUuid ?? null);
+              }
+            } catch (e) {
+              if (!cancelled) setLoadError(e?.message || 'Could not create session');
+            }
+          }
+          if (sid) {
+            const assembled = await assembleProttoyForm(sid, prottoyCategory || 'JAG');
+            list = (assembled.items || []).map((it) => strippedItemToQuestion(it, { isFollowup: false }));
+            remoteQuestionCount = list.length;
+            canPersistAnswersToDb.current = list.length === 40;
+          } else {
+            throw new Error('Prottoy requires a server session + assemble-form');
+          }
+        } else if (isSupabaseConfigured) {
           let remote = [];
           try {
             remote = await fetchPsychometricQuestions();
@@ -208,17 +256,19 @@ export default function AssessmentScreen() {
           } catch {
             session = null;
           }
+          canPersistAnswersToDb.current = Boolean(isSupabaseConfigured && remoteQuestionCount > 0);
         }
       } catch (e) {
         if (!cancelled) {
           setLoadError(e?.message || 'Supabase error');
         }
-        list = QUESTIONS;
-        session = null;
+        if (!prottoyOn) {
+          list = QUESTIONS;
+          session = null;
+        }
       }
       if (cancelled) return;
-      canPersistAnswersToDb.current = Boolean(isSupabaseConfigured && remoteQuestionCount > 0);
-      if (isSupabaseConfigured && remoteQuestionCount === 0) {
+      if (!prottoyOn && isSupabaseConfigured && remoteQuestionCount === 0) {
         console.warn(
           '[assessment] psychometric_questions is empty in Supabase — applicant/session still saved; '
           + 'run supabase/seed_questions.sql to persist per-question answers.',
@@ -226,13 +276,15 @@ export default function AssessmentScreen() {
       }
       setQuestions(list);
       setAssessmentQuestions(list);
-      setAssessmentSessionId(session?.sessionId ?? null);
-      setAssessmentApplicantUuid(session?.applicantUuid ?? null);
+      if (session?.sessionId) {
+        setAssessmentSessionId(session.sessionId);
+        setAssessmentApplicantUuid(session.applicantUuid ?? null);
+      }
       setIdx(0);
       setLoadingQuestions(false);
     })();
     return () => { cancelled = true; };
-  }, [applicantId, resetSessionKey, setAssessmentQuestions, setAssessmentSessionId, setAssessmentApplicantUuid]);
+  }, [applicantId, resetSessionKey, setAssessmentQuestions, setAssessmentSessionId, setAssessmentApplicantUuid, prottoyOn, prottoyCategory]);
 
   useEffect(() => { startAt.current = Date.now(); }, [idx]);
   useEffect(() => {
@@ -311,7 +363,9 @@ export default function AssessmentScreen() {
   };
 
   const q = questions[idx];
-  const dim = q ? dimensions.find(d => d.id === q.dim) : null;
+  const dim = prottoyOn
+    ? PROTTOY_DIM
+    : (q ? dimensions.find(d => d.id === q.dim) : null);
   const progress = questions.length ? (idx + 1) / questions.length : 0;
   const answered = q ? localAnswers[q.id] : undefined;
 
@@ -322,7 +376,7 @@ export default function AssessmentScreen() {
         <ActivityIndicator size="large" color={T.teal} />
         {loadError ? (
           <Text style={{ fontFamily: T.fBn, fontSize: 12, color: T.ink3, marginTop: 16, textAlign: 'center' }}>
-            {loadError}{'\n'}ব্যবহার হচ্ছে অফলাইন প্রশ্নব্যাংক।
+            {loadError}{'\n'}{prottoyOn ? 'Prottoy bank/session required.' : 'ব্যবহার হচ্ছে অফলাইন প্রশ্নব্যাংক।'}
           </Text>
         ) : null}
       </View>
@@ -346,8 +400,66 @@ export default function AssessmentScreen() {
     setIdx(0);
   };
 
+  const finishAssessment = () => {
+    if (prottoyOn) {
+      router.replace('/completion');
+      return;
+    }
+    if (assessmentSessionId) void completeAssessmentSession(assessmentSessionId);
+    router.replace('/scoring');
+  };
+
+  const loadFollowupsThenContinue = async () => {
+    const sid = sessionIdRef.current || assessmentSessionId;
+    if (!sid) {
+      finishAssessment();
+      return;
+    }
+    try {
+      const fu = await selectProttoyFollowups(sid);
+      const more = (fu.items || []).map((it) => strippedItemToQuestion(it, { isFollowup: true }));
+      setQuestions((prev) => {
+        const next = [...prev, ...more];
+        setAssessmentQuestions(next);
+        return next;
+      });
+      setCoreDone(true);
+      setIdx((i) => i + 1);
+    } catch (e) {
+      Alert.alert('Follow-ups', e?.message || 'Could not load follow-ups');
+      finishAssessment();
+    }
+  };
+
   const answer = (value) => {
     const ms = Date.now() - startAt.current;
+    if (prottoyOn) {
+      const optionId = typeof value === 'string' ? value : q.options?.[value]?.id;
+      const next = { ...localAnswers, [q.id]: { optionId, ms } };
+      setLocalAnswers(next);
+      void save(K.assessmentDraftApplicant, applicantId);
+      flashSaved();
+      const sid = sessionIdRef.current || assessmentSessionId;
+      if (sid && optionId) {
+        void saveProttoyResponse(sid, q.id, optionId, ms, {
+          isFollowup: Boolean(q.isFollowup),
+          position: idx + 1,
+        });
+      }
+      const isLast = idx >= questions.length - 1;
+      const atCoreEnd = !coreDone && questions.length === 40 && idx === 39;
+      setTimeout(() => {
+        if (atCoreEnd) {
+          void loadFollowupsThenContinue();
+        } else if (!isLast) {
+          setIdx(idx + 1);
+        } else {
+          finishAssessment();
+        }
+      }, 260);
+      return;
+    }
+
     const next = { ...localAnswers, [q.id]: { value, ms } };
     setLocalAnswers(next);
     void save(K.assessmentDraftApplicant, applicantId);
@@ -358,14 +470,15 @@ export default function AssessmentScreen() {
     const isLast = idx >= questions.length - 1;
     setTimeout(() => {
       if (!isLast) setIdx(idx + 1);
-      else {
-        if (assessmentSessionId) void completeAssessmentSession(assessmentSessionId);
-        router.replace('/scoring');
-      }
+      else finishAssessment();
     }, 260);
   };
 
   const autoFill = () => {
+    if (prottoyOn) {
+      Alert.alert('Prottoy', 'Auto-fill is disabled on the Prottoy path.');
+      return;
+    }
     const bias = PERSONA_BIAS[applicantId] || 0.7;
     const all = {};
     questions.forEach(qq => {
@@ -454,7 +567,7 @@ export default function AssessmentScreen() {
               {toBn(Math.round(progress * 100))}%
             </Text>
             <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.ink4 }}>
-              ~{toBn(estMinutesLeft)} মিন বাকি
+              {prottoyOn ? (q.isFollowup ? 'FOLLOW-UP' : 'CORE') : `~${toBn(estMinutesLeft)} মিন বাকি`}
             </Text>
           </View>
         </View>
@@ -512,16 +625,17 @@ export default function AssessmentScreen() {
             })}>
             <Text style={{ fontFamily: T.fBnBold, fontSize: 11, color: T.ink2 }}>🔊 প্রশ্ন শুনুন</Text>
           </Pressable>
-          <Chip color={T.ink4} size={9}>{q.type.toUpperCase()}</Chip>
-          {q.socialDesirability ? <Chip color={T.violet} size={9}>CHECK ⚑</Chip> : null}
-          {q.consistencyPair ? <Chip color={T.violet} size={9}>PAIR ⟷</Chip> : null}
+          <Chip color={T.ink4} size={9}>{(q.format || q.type || 'Q').toUpperCase()}</Chip>
+          {!prottoyOn && q.socialDesirability ? <Chip color={T.violet} size={9}>CHECK ⚑</Chip> : null}
+          {!prottoyOn && q.consistencyPair ? <Chip color={T.violet} size={9}>PAIR ⟷</Chip> : null}
         </View>
 
-        {q.type === 'scale'
+        {q.type === 'scale' && !prottoyOn
           ? <ScaleInput q={q} answered={answered} onAnswer={answer} />
-          : <OptionList q={q} answered={answered} onAnswer={answer} />}
+          : <OptionList q={q} answered={answered} onAnswer={answer} useOptionIds={prottoyOn} />}
       </ScrollView>
 
+      {!prottoyOn ? (
       <View style={{
         paddingVertical: 10, paddingHorizontal: 16,
         backgroundColor: '#fff',
@@ -556,9 +670,10 @@ export default function AssessmentScreen() {
           </Text>
         </Pressable>
       </View>
+      ) : null}
 
-      <FreyaButton onPress={() => setFreya(v => !v)} />
-      {freya ? <FreyaHint q={q} onClose={() => setFreya(false)} /> : null}
+      {!prottoyOn ? <FreyaButton onPress={() => setFreya(v => !v)} /> : null}
+      {!prottoyOn && freya ? <FreyaHint q={q} onClose={() => setFreya(false)} /> : null}
 
       <Modal visible={resumeOpen} transparent animationType="fade" onRequestClose={() => setResumeOpen(false)}>
         <View style={{

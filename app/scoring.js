@@ -7,6 +7,7 @@ import { T } from '../constants/tokens';
 import { useApp } from '../context/AppContext';
 import FreyaOrb from '../components/FreyaOrb';
 import { save, K } from '../utils/storage';
+import { isProttoyBankEnabled } from '../lib/prottoyFlags';
 
 const MESSAGES = [
   { bn: 'উত্তরগুলো পড়ে দেখছি…', en: 'Analyzing responses…', icon: '◐' },
@@ -40,7 +41,15 @@ export default function ScoringScreen() {
     void save(K.assessmentDraftApplicant, null);
   }, []);
 
+  // Prottoy path must never land on Freya score animation / result.
   useEffect(() => {
+    if (isProttoyBankEnabled()) {
+      router.replace('/completion');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isProttoyBankEnabled()) return undefined;
     if (step >= MESSAGES.length) {
       const t = setTimeout(() => router.replace('/result'), 500);
       return () => clearTimeout(t);
@@ -48,6 +57,10 @@ export default function ScoringScreen() {
     const t = setTimeout(() => setStep(s => s + 1), 750);
     return () => clearTimeout(t);
   }, [step]);
+
+  if (isProttoyBankEnabled()) {
+    return <View style={{ flex: 1, backgroundColor: T.navy }} />;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: T.navy, alignItems: 'center', justifyContent: 'center', padding: 24 }}>

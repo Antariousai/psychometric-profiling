@@ -74,6 +74,14 @@ export default function ResultScreen() {
     assessmentApplicantUuid,
     dimensions: dimensionList,
   } = useApp();
+
+  // Prottoy: never show Freya score / approve-by-score UI on the field path.
+  useEffect(() => {
+    if (String(process.env.EXPO_PUBLIC_PROTTOY_BANK || '').toLowerCase() === 'true') {
+      router.replace('/completion');
+    }
+  }, []);
+
   const [tab, setTab] = useState('summary');
   const [flagModal, setFlagModal] = useState(false);
   const [decisionModal, setDecisionModal] = useState(null);
@@ -83,6 +91,9 @@ export default function ResultScreen() {
   const questionBank = assessmentQuestions ?? QUESTIONS;
 
   const result = useMemo(() => {
+    if (String(process.env.EXPO_PUBLIC_PROTTOY_BANK || '').toLowerCase() === 'true') {
+      return null;
+    }
     if (answers && Object.keys(answers).length > 0) {
       return computeScore(answers, questionBank, dimensionList);
     }
@@ -101,6 +112,7 @@ export default function ResultScreen() {
   }, [applicantId, answers, questionBank, dimensionList]);
 
   useEffect(() => {
+    if (String(process.env.EXPO_PUBLIC_PROTTOY_BANK || '').toLowerCase() === 'true') return;
     if (!isSupabaseConfigured || !assessmentSessionId) return;
     if (!answers || Object.keys(answers).length === 0) return;
     const r = computeScore(answers, questionBank, dimensionList);
@@ -117,6 +129,10 @@ export default function ResultScreen() {
     questionBank,
     dimensionList,
   ]);
+
+  if (String(process.env.EXPO_PUBLIC_PROTTOY_BANK || '').toLowerCase() === 'true' || !result) {
+    return <View style={{ flex: 1, backgroundColor: T.cream }} />;
+  }
 
   const scoreColor = colorForRating(result.rating);
   const { recLoanAmt, emi } = calcLoanRecommendation(result.rating, applicant.loanAsk ?? 0);

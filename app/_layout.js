@@ -25,9 +25,13 @@ function RootStackScreens() {
       <Stack.Screen name="otp" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="intake" />
+      <Stack.Screen name="consent" />
       <Stack.Screen name="assessment" />
       <Stack.Screen name="scoring" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="completion" options={{ gestureEnabled: false }} />
       <Stack.Screen name="result" />
+      <Stack.Screen name="manager" />
+      <Stack.Screen name="manager-session" />
       <Stack.Screen name="kyc" />
       <Stack.Screen name="credit" />
       <Stack.Screen name="repayment" />

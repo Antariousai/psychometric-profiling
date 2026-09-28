@@ -1,0 +1,7 @@
+# PROTTOY restricted keys — never index or send to the model
+prottoy-pack/restricted/
+**/*seed_keys*
+**/*.keys.json
+**/seed_keys*.json
+.env
+.env*.local

@@ -29,26 +29,33 @@ ALTER TABLE public.assessment_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.assessment_responses ENABLE ROW LEVEL SECURITY;
 
 -- Anon (mobile app) policies — tighten when you add Supabase Auth.
+-- Drop first so a re-push against an already-provisioned database does not fail.
+DROP POLICY IF EXISTS psychometric_questions_select_anon ON public.psychometric_questions;
 CREATE POLICY psychometric_questions_select_anon
   ON public.psychometric_questions FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS assessment_sessions_insert_anon ON public.assessment_sessions;
 CREATE POLICY assessment_sessions_insert_anon
   ON public.assessment_sessions FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS assessment_sessions_update_anon ON public.assessment_sessions;
 CREATE POLICY assessment_sessions_update_anon
   ON public.assessment_sessions FOR UPDATE
   USING (true);
 
+DROP POLICY IF EXISTS assessment_responses_select_anon ON public.assessment_responses;
 CREATE POLICY assessment_responses_select_anon
   ON public.assessment_responses FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS assessment_responses_insert_anon ON public.assessment_responses;
 CREATE POLICY assessment_responses_insert_anon
   ON public.assessment_responses FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS assessment_responses_update_anon ON public.assessment_responses;
 CREATE POLICY assessment_responses_update_anon
   ON public.assessment_responses FOR UPDATE
   USING (true)

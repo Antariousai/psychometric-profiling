@@ -13,6 +13,9 @@ import PrimaryBtn from '../components/PrimaryBtn';
 import FreyaOrb from '../components/FreyaOrb';
 import FreyaButton from '../components/FreyaButton';
 import { bn as toBn } from '../utils/format';
+import { isProttoyBankEnabled, PROTTOY_CATEGORIES } from '../lib/prottoyFlags';
+import { createAssessmentSession } from '../services/psympSupabase';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 function formFromTemplate(p) {
   return {
@@ -40,11 +43,18 @@ function formFromTemplate(p) {
 export default function IntakeScreen() {
   const router = useRouter();
   const pathname = usePathname();
-  const { applicantId, setApplicant, setApplicantDraft, hydrated, applicant } = useApp();
+  const {
+    applicantId, setApplicant, setApplicantDraft, hydrated, applicant,
+    prottoyCategory, setProttoyCategory,
+    setAssessmentSessionId, setAssessmentApplicantUuid,
+    setProttoyConsentAccepted,
+  } = useApp();
   const applicantRef = useRef(applicant);
   applicantRef.current = applicant;
+  const prottoyOn = isProttoyBankEnabled();
 
   const [form, setForm] = useState(() => formFromTemplate(PERSONAS.nasrin));
+  const [starting, setStarting] = useState(false);
 
   const prevIdRef = useRef(null);
   useEffect(() => {
@@ -301,10 +311,70 @@ export default function IntakeScreen() {
             </View>
           </View>
 
+          {prottoyOn ? (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{
+                fontFamily: T.fMonoBold, fontSize: 9,
+                letterSpacing: 1.5, color: T.ink4, marginBottom: 8,
+              }}>PROTTOY CATEGORY · JAG / AGR / SUF / BUN</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {PROTTOY_CATEGORIES.map((c) => {
+                  const on = prottoyCategory === c.code;
+                  return (
+                    <Pressable
+                      key={c.code}
+                      onPress={() => setProttoyCategory(c.code)}
+                      style={{
+                        paddingVertical: 10, paddingHorizontal: 14,
+                        borderRadius: 12,
+                        backgroundColor: on ? T.navy : '#fff',
+                        borderWidth: 1.5,
+                        borderColor: on ? T.navy : T.border,
+                      }}
+                    >
+                      <Text style={{
+                        fontFamily: T.fBnBold, fontSize: 13,
+                        color: on ? '#fff' : T.ink,
+                      }}>{c.bn}</Text>
+                      <Text style={{
+                        fontFamily: T.fMono, fontSize: 9,
+                        color: on ? T.teal : T.ink4, marginTop: 2,
+                      }}>{c.code} · {c.en}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
+
           <PrimaryBtn
-            label={{ bn: 'চলো প্রশ্ন শুরু করি', en: 'Start assessment' }}
+            label={{
+              bn: prottoyOn ? 'সম্মতি ও প্রশ্ন শুরু' : 'চলো প্রশ্ন শুরু করি',
+              en: prottoyOn ? 'Consent & start' : 'Start assessment',
+            }}
             icon="→"
-            onPress={() => router.push('/assessment')}
+            disabled={starting}
+            onPress={async () => {
+              if (!prottoyOn) {
+                router.push('/assessment');
+                return;
+              }
+              setStarting(true);
+              try {
+                setProttoyConsentAccepted(false);
+                if (isSupabaseConfigured) {
+                  const session = await createAssessmentSession(applicantId, form);
+                  setAssessmentSessionId(session?.sessionId ?? null);
+                  setAssessmentApplicantUuid(session?.applicantUuid ?? null);
+                }
+                router.push('/consent');
+              } catch (e) {
+                console.warn('[intake] start prottoy', e?.message || e);
+                router.push('/consent');
+              } finally {
+                setStarting(false);
+              }
+            }}
           />
         </View>
       </ScrollView>

@@ -287,6 +287,26 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
+        {String(process.env.EXPO_PUBLIC_PROTTOY_BANK || '').toLowerCase() === 'true' ? (
+          <Pressable
+            onPress={() => router.push('/manager')}
+            style={{
+              marginHorizontal: 16, marginTop: 10,
+              backgroundColor: T.navy, borderRadius: 14,
+              paddingVertical: 14, paddingHorizontal: 16,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <View>
+              <Text style={{ fontFamily: T.fBnBold, fontSize: 14, color: '#fff' }}>ম্যানেজার সিদ্ধান্ত</Text>
+              <Text style={{ fontFamily: T.fMono, fontSize: 9, color: T.teal, marginTop: 3 }}>
+                PS · WI · SRI · VI · ROLE-GATED
+              </Text>
+            </View>
+            <Text style={{ color: '#fff', fontSize: 18 }}>→</Text>
+          </Pressable>
+        ) : null}
+
         <View style={{
           marginHorizontal: 16, marginTop: 10,
           paddingVertical: 10, paddingHorizontal: 12,

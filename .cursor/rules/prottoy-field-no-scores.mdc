@@ -1,0 +1,19 @@
+---
+description: PROTTOY field app must never import scoring or display scores
+globs:
+  - app/**/*
+  - components/**/*
+  - services/**/*
+  - context/**/*
+alwaysApply: false
+---
+
+# PROTTOY field path — no scores
+
+When `EXPO_PUBLIC_PROTTOY_BANK=true` (or Prottoy session flow):
+
+- Do **not** import `data/scoring`, `computeScore`, or anything under `supabase/functions/_shared/prottoy-engine/`.
+- Do **not** display PS, WI, SRI, VI, bands, flags, reason codes, or “correct” answers on field screens.
+- After assessment: completion / sync / hand-back only (`app/completion.js`).
+- `finalize-assessment` client helpers must treat the response as ACK-only; ignore any unexpected score keys.
+- Marks and keys never ship in Expo bundles or client env vars.

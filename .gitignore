@@ -11,3 +11,10 @@ npm-debug.*
 web-build/
 .env*.local
 .env
+supabase/.temp/
+
+# PROTTOY restricted scoring keys — never commit
+prottoy-pack/restricted/
+**/*seed_keys*
+**/*.keys.json
+**/seed_keys*.json

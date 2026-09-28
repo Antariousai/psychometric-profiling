@@ -9,6 +9,8 @@ import {
   fetchApplicantProfileBySlug,
   flushSyncQueue,
 } from '../services/psympSupabase';
+import { fetchStaffProfile } from '../services/prottoySupabase';
+import { isProttoyBankEnabled, normalizeStaffRole } from '../lib/prottoyFlags';
 
 const AppCtx = createContext(null);
 
@@ -30,6 +32,9 @@ export function AppProvider({ children }) {
   const [remoteApplicant, setRemoteApplicant] = useState(null);
   const [applicantDraft, setApplicantDraft] = useState(null);
   const [queueSize, setQueueSize] = useState(0);
+  const [prottoyCategory, setProttoyCategoryState] = useState('JAG');
+  const [prottoyConsentAccepted, setProttoyConsentAccepted] = useState(false);
+  const [staffRole, setStaffRole] = useState(null);
   const applicantIdRef = useRef(applicantId);
 
   useEffect(() => {
@@ -79,6 +84,14 @@ export function AppProvider({ children }) {
         setQueueSize(q.length);
       } catch {
         /* noop */
+      }
+      if (isProttoyBankEnabled()) {
+        try {
+          const profile = await fetchStaffProfile();
+          if (profile?.role) setStaffRole(normalizeStaffRole(profile.role));
+        } catch (e) {
+          console.warn('[App] staff profile', e?.message || e);
+        }
       }
     })();
   }, [hydrated]);
@@ -173,6 +186,10 @@ export function AppProvider({ children }) {
   const openFreya = () => setShowFreya(true);
   const closeFreya = () => setShowFreya(false);
 
+  const setProttoyCategory = (code) => {
+    setProttoyCategoryState(String(code || 'JAG').toUpperCase());
+  };
+
   const resetAll = async () => {
     await clearAll();
     setApplicantIdState('nasrin');
@@ -183,6 +200,8 @@ export function AppProvider({ children }) {
     setAssessmentQuestionsState(null);
     setRemoteApplicant(null);
     setApplicantDraft(null);
+    setProttoyCategoryState('JAG');
+    setProttoyConsentAccepted(false);
   };
 
   const pendingSync = queueSize;
@@ -208,6 +227,12 @@ export function AppProvider({ children }) {
     assessmentQuestions,
     setAssessmentQuestions: setAssessmentQuestionsState,
     dimensions,
+    prottoyCategory,
+    setProttoyCategory,
+    prottoyConsentAccepted,
+    setProttoyConsentAccepted,
+    staffRole,
+    setStaffRole,
   };
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
